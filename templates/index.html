@@ -323,57 +323,117 @@
 
                             <!-- 商机预估 -->
                             <div class="mb-4">
-                                <h5 class="section-title">
-                                    <i class="bi bi-cash-coin me-2"></i> 6. 商机预估（权重20%）
-                                </h5>
-                                <div class="row">
-                                    <div class="col-md-2 col-6">
-                                        <div class="rating-option">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="profitEstimate" value="20" id="profit1">
-                                                <label class="form-check-label" for="profit1">
-                                                    ≥1亿营收或≥500万毛利 <span class="weight-tag">20分</span>
-                                                </label>
+                                <div class="profit-estimation-section">
+                                    <div class="section-header mb-4">
+                                        <h5 class="section-title d-flex align-items-center">
+                                            <i class="bi bi-cash-coin text-success me-2"></i> 
+                                            6. 商机预估评分
+                                            <span class="weight-indicator ms-auto">权重 20%</span>
+                                        </h5>
+                                        <p class="section-subtitle text-muted mb-0">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            请根据预期营收或毛利润选择对应档次，分数越高代表商机价值越大
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="profit-options-container">
+                                        <div class="row g-3">
+                                            <!-- 最高档次 -->
+                                            <div class="col-xl-4 col-lg-6 col-md-6">
+                                                <div class="profit-card premium-tier">
+                                                    <input class="profit-radio" type="radio" name="profitEstimate" value="20" id="profit1">
+                                                    <label class="profit-label" for="profit1">
+                                                        <div class="profit-icon">
+                                                            <i class="bi bi-trophy-fill"></i>
+                                                        </div>
+                                                        <div class="profit-content">
+                                                            <div class="profit-title">顶级商机</div>
+                                                            <div class="profit-desc">≥1亿营收 或 ≥500万毛利</div>
+                                                            <div class="profit-score">20分</div>
+                                                        </div>
+                                                        <div class="profit-badge premium">顶级</div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 高档次 -->
+                                            <div class="col-xl-4 col-lg-6 col-md-6">
+                                                <div class="profit-card high-tier">
+                                                    <input class="profit-radio" type="radio" name="profitEstimate" value="10" id="profit2">
+                                                    <label class="profit-label" for="profit2">
+                                                        <div class="profit-icon">
+                                                            <i class="bi bi-gem"></i>
+                                                        </div>
+                                                        <div class="profit-content">
+                                                            <div class="profit-title">优质商机</div>
+                                                            <div class="profit-desc">≥100万毛利</div>
+                                                            <div class="profit-score">10分</div>
+                                                        </div>
+                                                        <div class="profit-badge high">优质</div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 中档次 -->
+                                            <div class="col-xl-4 col-lg-6 col-md-6">
+                                                <div class="profit-card medium-tier">
+                                                    <input class="profit-radio" type="radio" name="profitEstimate" value="5" id="profit3">
+                                                    <label class="profit-label" for="profit3">
+                                                        <div class="profit-icon">
+                                                            <i class="bi bi-star-fill"></i>
+                                                        </div>
+                                                        <div class="profit-content">
+                                                            <div class="profit-title">中等商机</div>
+                                                            <div class="profit-desc">≥60万毛利</div>
+                                                            <div class="profit-score">5分</div>
+                                                        </div>
+                                                        <div class="profit-badge medium">中等</div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 基础档次 -->
+                                            <div class="col-xl-4 col-lg-6 col-md-6">
+                                                <div class="profit-card basic-tier">
+                                                    <input class="profit-radio" type="radio" name="profitEstimate" value="2" id="profit4">
+                                                    <label class="profit-label" for="profit4">
+                                                        <div class="profit-icon">
+                                                            <i class="bi bi-bookmark-fill"></i>
+                                                        </div>
+                                                        <div class="profit-content">
+                                                            <div class="profit-title">基础商机</div>
+                                                            <div class="profit-desc">≥12万毛利</div>
+                                                            <div class="profit-score">2分</div>
+                                                        </div>
+                                                        <div class="profit-badge basic">基础</div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 最低档次 -->
+                                            <div class="col-xl-4 col-lg-6 col-md-6">
+                                                <div class="profit-card low-tier">
+                                                    <input class="profit-radio" type="radio" name="profitEstimate" value="0" id="profit5">
+                                                    <label class="profit-label" for="profit5">
+                                                        <div class="profit-icon">
+                                                            <i class="bi bi-dash-circle"></i>
+                                                        </div>
+                                                        <div class="profit-content">
+                                                            <div class="profit-title">低价值商机</div>
+                                                            <div class="profit-desc">＜12万毛利</div>
+                                                            <div class="profit-score">0分</div>
+                                                        </div>
+                                                        <div class="profit-badge low">低值</div>
+                                                    </label>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="col-md-2 col-6">
-                                        <div class="rating-option">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="profitEstimate" value="10" id="profit2">
-                                                <label class="form-check-label" for="profit2">
-                                                    ≥100万毛利 <span class="weight-tag">10分</span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2 col-6">
-                                        <div class="rating-option">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="profitEstimate" value="5" id="profit3">
-                                                <label class="form-check-label" for="profit3">
-                                                    ≥60万毛利 <span class="weight-tag">5分</span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2 col-6">
-                                        <div class="rating-option">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="profitEstimate" value="2" id="profit4">
-                                                <label class="form-check-label" for="profit4">
-                                                    ≥12万毛利 <span class="weight-tag">2分</span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2 col-6">
-                                        <div class="rating-option">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="profitEstimate" value="0" id="profit5">
-                                                <label class="form-check-label" for="profit5">
-                                                    <12万毛利 <span class="weight-tag">0分</span>
-                                                </label>
+                                        
+                                        <!-- 选择提示 -->
+                                        <div class="profit-hint mt-3">
+                                            <div class="alert alert-info py-2 mb-0">
+                                                <i class="bi bi-lightbulb me-2"></i>
+                                                <strong>评估建议：</strong> 请综合考虑客户规模、项目周期、合作潜力等因素进行评估
                                             </div>
                                         </div>
                                     </div>

@@ -1147,4 +1147,332 @@ body {
         font-size: 0.7rem;
         padding: 1px 6px;
     }
+}
+
+/* ================================ 商机预估美化样式 ================================ */
+
+.profit-estimation-section {
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    border: 1px solid var(--gray-200);
+    position: relative;
+    overflow: hidden;
+    margin: 0 -0.5rem;
+}
+
+.profit-estimation-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+}
+
+.section-header {
+    position: relative;
+}
+
+.section-header .section-title {
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin-bottom: 0.5rem;
+    color: var(--gray-800);
+}
+
+.weight-indicator {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    white-space: nowrap;
+}
+
+.section-subtitle {
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.profit-options-container {
+    margin-top: 1rem;
+}
+
+.profit-card {
+    position: relative;
+    background: white;
+    border-radius: var(--border-radius-sm);
+    border: 2px solid var(--gray-200);
+    transition: var(--transition);
+    overflow: hidden;
+    height: 100%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.profit-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    transition: var(--transition);
+}
+
+.profit-card.premium-tier::before {
+    background: linear-gradient(90deg, #ffd700 0%, #ffed4e 100%);
+}
+
+.profit-card.high-tier::before {
+    background: linear-gradient(90deg, #8b5cf6 0%, #a78bfa 100%);
+}
+
+.profit-card.medium-tier::before {
+    background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+}
+
+.profit-card.basic-tier::before {
+    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+}
+
+.profit-card.low-tier::before {
+    background: linear-gradient(90deg, #6b7280 0%, #9ca3af 100%);
+}
+
+.profit-radio {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.profit-label {
+    display: block;
+    padding: 1.25rem;
+    cursor: pointer;
+    margin: 0;
+    height: 100%;
+    position: relative;
+    transition: var(--transition);
+}
+
+.profit-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    font-size: 1.2rem;
+    transition: var(--transition);
+}
+
+.premium-tier .profit-icon {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #b45309;
+}
+
+.high-tier .profit-icon {
+    background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+    color: white;
+}
+
+.medium-tier .profit-icon {
+    background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+    color: white;
+}
+
+.basic-tier .profit-icon {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    color: white;
+}
+
+.low-tier .profit-icon {
+    background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+    color: white;
+}
+
+.profit-content {
+    text-align: center;
+}
+
+.profit-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 0.5rem;
+}
+
+.profit-desc {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.profit-score {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.profit-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.profit-badge.premium {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #b45309;
+}
+
+.profit-badge.high {
+    background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+    color: white;
+}
+
+.profit-badge.medium {
+    background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+    color: white;
+}
+
+.profit-badge.basic {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    color: white;
+}
+
+.profit-badge.low {
+    background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+    color: white;
+}
+
+/* 悬停效果 */
+.profit-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    border-color: var(--primary-color);
+}
+
+.profit-card:hover .profit-icon {
+    transform: scale(1.1);
+}
+
+/* 选中状态 */
+.profit-radio:checked + .profit-label .profit-card,
+.profit-radio:checked ~ .profit-card {
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.25);
+    transform: translateY(-2px);
+}
+
+/* 修正选中状态的样式 */
+.profit-radio:checked + .profit-label {
+    transform: translateY(-2px);
+}
+
+.profit-radio:checked + .profit-label .profit-card {
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.25);
+}
+
+.profit-radio:checked + .profit-label .profit-title {
+    color: var(--primary-color);
+}
+
+.profit-radio:checked + .profit-label .profit-icon {
+    transform: scale(1.15);
+}
+
+/* 提示区域 */
+.profit-hint {
+    background: rgba(59, 130, 246, 0.05);
+    border-radius: var(--border-radius-sm);
+    padding: 1rem;
+}
+
+.profit-hint .alert {
+    margin: 0;
+    background: transparent;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: var(--gray-700);
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .profit-card {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .profit-estimation-section {
+        padding: 1rem;
+        margin: 0 -0.25rem;
+    }
+    
+    .profit-card {
+        margin-bottom: 0.75rem;
+    }
+    
+    .profit-label {
+        padding: 1rem;
+    }
+    
+    .profit-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .profit-title {
+        font-size: 1rem;
+    }
+    
+    .profit-desc {
+        font-size: 0.85rem;
+    }
+    
+    .profit-score {
+        font-size: 1.1rem;
+    }
+    
+    .weight-indicator {
+        padding: 0.2rem 0.6rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .section-header .section-title {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .weight-indicator {
+        align-self: flex-start;
+    }
+    
+    .profit-estimation-section {
+        margin: 0;
+    }
 } 

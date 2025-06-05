@@ -16,7 +16,7 @@ DB_HOST = os.environ.get('DB_HOST', 'localhost')
 DB_PORT = os.environ.get('DB_PORT', '3306')
 DB_NAME = os.environ.get('DB_NAME', 'customer_rating_system')
 DB_USER = os.environ.get('DB_USER', 'root')
-DB_PASSWORD = os.environ.get('DB_PASSWORD', 'password')
+DB_PASSWORD = os.environ.get('DB_PASSWORD', 'bondex123')
 
 # MySQL连接字符串
 mysql_uri = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4'
@@ -25,13 +25,12 @@ mysql_uri = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NA
 basedir = os.path.abspath(os.path.dirname(__file__))
 sqlite_uri = f'sqlite:///{os.path.join(basedir, "customer_rating.db")}'
 
-# 优先使用MySQL，如果连接失败则使用SQLite
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', mysql_uri)
+# 暂时使用SQLite数据库（MySQL服务未启动）
+app.config['SQLALCHEMY_DATABASE_URI'] = sqlite_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,
-    'pool_recycle': 300,
-    'connect_args': {"charset": "utf8mb4"}
+    'pool_recycle': 300
 }
 app.config['SECRET_KEY'] = 'customer-rating-system-2024'
 
@@ -75,16 +74,11 @@ class CustomerRating(db.Model):
 # 创建数据库表
 with app.app_context():
     try:
-        # 尝试连接数据库并创建表
         db.create_all()
-        print(f"✅ 数据库连接成功: {app.config['SQLALCHEMY_DATABASE_URI']}")
+        print(f"✅ SQLite数据库连接成功: {app.config['SQLALCHEMY_DATABASE_URI']}")
     except Exception as e:
         print(f"❌ 数据库连接失败: {e}")
-        print("🔄 尝试使用SQLite备用数据库...")
-        # 如果MySQL连接失败，切换到SQLite
-        app.config['SQLALCHEMY_DATABASE_URI'] = sqlite_uri
-        db.create_all()
-        print(f"✅ SQLite数据库已启用: {sqlite_uri}")
+        raise
 
 # 初始化外部数据服务
 external_service = ExternalDataService()
