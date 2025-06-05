@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initRatingOptions();
     initForm();
     initCompanyAutocomplete();
+    initDepartmentAutocomplete();
     
     // 初始化企业名称显示
     updateCurrentCompanyName();
@@ -112,6 +113,216 @@ async function searchCompanies(query) {
         console.error('搜索企业名称失败:', error);
         showAutocompleteError();
     }
+}
+
+// 部门自动补全功能
+let departmentAutocompleteTimeout;
+let currentDepartmentSuggestionIndex = -1;
+let departmentAutocompleteVisible = false;
+
+function initDepartmentAutocomplete() {
+    const departmentInput = document.getElementById('submitterDepartment');
+    const autocompleteContainer = document.getElementById('departmentAutocomplete');
+    
+    if (!departmentInput || !autocompleteContainer) return;
+    
+    // 输入事件
+    departmentInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        
+        // 清除之前的超时
+        if (departmentAutocompleteTimeout) {
+            clearTimeout(departmentAutocompleteTimeout);
+        }
+        
+        // 延迟搜索，避免频繁请求
+        departmentAutocompleteTimeout = setTimeout(() => {
+            if (query.length >= 1) {
+                searchDepartments(query);
+            } else if (query.length === 0) {
+                showPopularDepartments();
+            } else {
+                hideDepartmentAutocomplete();
+            }
+        }, 200);
+    });
+    
+    // 焦点事件
+    departmentInput.addEventListener('focus', function() {
+        const query = this.value.trim();
+        if (query.length >= 1) {
+            searchDepartments(query);
+        } else if (query.length === 0) {
+            showPopularDepartments();
+        }
+    });
+    
+    // 失去焦点事件
+    departmentInput.addEventListener('blur', function() {
+        // 延迟隐藏，确保点击建议项有效
+        setTimeout(() => {
+            hideDepartmentAutocomplete();
+        }, 200);
+    });
+    
+    // 键盘导航
+    departmentInput.addEventListener('keydown', function(e) {
+        if (!departmentAutocompleteVisible) return;
+        
+        const suggestions = autocompleteContainer.querySelectorAll('.department-suggestion');
+        
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                currentDepartmentSuggestionIndex = Math.min(currentDepartmentSuggestionIndex + 1, suggestions.length - 1);
+                updateDepartmentSuggestionSelection(suggestions);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                currentDepartmentSuggestionIndex = Math.max(currentDepartmentSuggestionIndex - 1, -1);
+                updateDepartmentSuggestionSelection(suggestions);
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (currentDepartmentSuggestionIndex >= 0 && suggestions[currentDepartmentSuggestionIndex]) {
+                    selectDepartmentSuggestion(suggestions[currentDepartmentSuggestionIndex]);
+                }
+                break;
+            case 'Escape':
+                hideDepartmentAutocomplete();
+                break;
+        }
+    });
+    
+    // 点击外部区域隐藏建议
+    document.addEventListener('click', function(e) {
+        if (!departmentInput.contains(e.target) && !autocompleteContainer.contains(e.target)) {
+            hideDepartmentAutocomplete();
+        }
+    });
+}
+
+async function searchDepartments(query) {
+    try {
+        showDepartmentAutocompleteLoading();
+        
+        const response = await fetch(`/api/department-autocomplete?q=${encodeURIComponent(query)}&limit=8`);
+        const result = await response.json();
+        
+        if (result.success && result.data.suggestions.length > 0) {
+            showDepartmentSuggestions(result.data.suggestions, query);
+        } else {
+            showNoDepartmentResults(query);
+        }
+    } catch (error) {
+        console.error('搜索部门失败:', error);
+        showDepartmentAutocompleteError();
+    }
+}
+
+async function showPopularDepartments() {
+    try {
+        const response = await fetch('/api/department-autocomplete?limit=8');
+        const result = await response.json();
+        
+        if (result.success && result.data.suggestions.length > 0) {
+            showDepartmentSuggestions(result.data.suggestions, '', true);
+        }
+    } catch (error) {
+        console.error('获取热门部门失败:', error);
+    }
+}
+
+function showDepartmentSuggestions(suggestions, query, isPopular = false) {
+    const autocompleteContainer = document.getElementById('departmentAutocomplete');
+    
+    let html = '';
+    
+    if (isPopular) {
+        html += '<div class="autocomplete-hint"><i class="bi bi-building me-1"></i> 常用部门推荐</div>';
+    }
+    
+    suggestions.forEach((suggestion, index) => {
+        html += `
+            <div class="department-suggestion autocomplete-suggestion" data-index="${index}" data-department="${suggestion.name}">
+                <span class="department-name">${highlightMatch(suggestion.name, query)}</span>
+                <span class="usage-count text-muted">使用${suggestion.count || 0}次</span>
+            </div>
+        `;
+    });
+    
+    autocompleteContainer.innerHTML = html;
+    autocompleteContainer.style.display = 'block';
+    departmentAutocompleteVisible = true;
+    currentDepartmentSuggestionIndex = -1;
+    
+    // 绑定点击事件
+    autocompleteContainer.querySelectorAll('.department-suggestion').forEach(item => {
+        item.addEventListener('click', function() {
+            selectDepartmentSuggestion(this);
+        });
+    });
+}
+
+function showDepartmentAutocompleteLoading() {
+    const autocompleteContainer = document.getElementById('departmentAutocomplete');
+    autocompleteContainer.innerHTML = `
+        <div class="autocomplete-loading">
+            <i class="bi bi-search me-2"></i>正在搜索...
+        </div>
+    `;
+    autocompleteContainer.style.display = 'block';
+    departmentAutocompleteVisible = true;
+}
+
+function showNoDepartmentResults(query) {
+    const autocompleteContainer = document.getElementById('departmentAutocomplete');
+    autocompleteContainer.innerHTML = `
+        <div class="autocomplete-empty">
+            <i class="bi bi-info-circle me-2"></i>未找到匹配的部门，将创建新部门记录
+        </div>
+    `;
+    autocompleteContainer.style.display = 'block';
+    departmentAutocompleteVisible = true;
+}
+
+function showDepartmentAutocompleteError() {
+    const autocompleteContainer = document.getElementById('departmentAutocomplete');
+    autocompleteContainer.innerHTML = `
+        <div class="autocomplete-empty">
+            <i class="bi bi-exclamation-triangle me-2"></i>搜索失败，请重试
+        </div>
+    `;
+    autocompleteContainer.style.display = 'block';
+    departmentAutocompleteVisible = true;
+}
+
+function hideDepartmentAutocomplete() {
+    const autocompleteContainer = document.getElementById('departmentAutocomplete');
+    autocompleteContainer.style.display = 'none';
+    departmentAutocompleteVisible = false;
+    currentDepartmentSuggestionIndex = -1;
+}
+
+function updateDepartmentSuggestionSelection(suggestions) {
+    suggestions.forEach((suggestion, index) => {
+        if (index === currentDepartmentSuggestionIndex) {
+            suggestion.classList.add('selected');
+        } else {
+            suggestion.classList.remove('selected');
+        }
+    });
+}
+
+function selectDepartmentSuggestion(suggestionElement) {
+    const departmentName = suggestionElement.getAttribute('data-department');
+    const departmentInput = document.getElementById('submitterDepartment');
+    
+    departmentInput.value = departmentName;
+    hideDepartmentAutocomplete();
+    
+    // 触发change事件
+    departmentInput.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 async function showPopularCompanies() {
@@ -383,6 +594,8 @@ async function calculateRating() {
 function validateForm() {
     const customerName = document.getElementById('customerName').value.trim();
     const customerType = document.getElementById('customerType').value;
+    const submitterName = document.getElementById('submitterName').value.trim();
+    const submitterDepartment = document.getElementById('submitterDepartment').value.trim();
     
     if (!customerName) {
         alert('请输入客户名称');
@@ -393,6 +606,18 @@ function validateForm() {
     if (!customerType) {
         alert('请选择客户类型');
         document.getElementById('customerType').focus();
+        return false;
+    }
+    
+    if (!submitterName) {
+        alert('请输入提交人姓名');
+        document.getElementById('submitterName').focus();
+        return false;
+    }
+    
+    if (!submitterDepartment) {
+        alert('请输入所属部门');
+        document.getElementById('submitterDepartment').focus();
         return false;
     }
     
@@ -452,6 +677,9 @@ function collectFormData() {
         customer_name: document.getElementById('customerName').value.trim(),
         customer_type: customerType.value,
         customer_type_text: customerType.options[customerType.selectedIndex].text,
+        submitter_name: document.getElementById('submitterName').value.trim(),
+        submitter_department: document.getElementById('submitterDepartment').value.trim(),
+        submitter_department_text: document.getElementById('submitterDepartment').value.trim(),
         industry_score: getSelectedValue('industry'),
         industry_detail: getSelectedText('industry'),
         business_type_score: getSelectedValue('businessType'),

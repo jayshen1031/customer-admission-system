@@ -253,6 +253,12 @@ function renderHistoryTable(ratings) {
                 <span class="badge bg-secondary">${getCustomerTypeText(rating.customer_type)}</span>
             </td>
             <td>
+                <div>
+                    <div class="fw-semibold">${rating.submitter_name || '未填写'}</div>
+                    <small class="text-muted">${rating.submitter_department || '未填写'}</small>
+                </div>
+            </td>
+            <td>
                 <div class="score-display-inline">
                     <span class="fw-bold fs-5 text-${getScoreColor(rating.total_score)}">${rating.total_score}</span>
                     <small class="text-muted ms-1">/ 100 分</small>
@@ -499,6 +505,14 @@ function renderDetailModal(rating) {
                             <div class="col-6">
                                 <strong>客户类型：</strong><br>
                                 <span class="badge bg-secondary fs-6 px-3 py-2">${getCustomerTypeText(rating.customer_type)}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>提交人：</strong><br>
+                                <span class="text-muted">${rating.submitter_name || '未填写'}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>部门：</strong><br>
+                                <span class="text-muted">${rating.submitter_department || '未填写'}</span>
                             </div>
                             <div class="col-6">
                                 <strong>评估日期：</strong><br>

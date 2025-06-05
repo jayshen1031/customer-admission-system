@@ -145,6 +145,33 @@
                                 </div>
                             </div>
 
+                            <!-- 提交人信息 -->
+                            <div class="row mb-4">
+                                <div class="col-md-6 mb-3">
+                                    <label for="submitterName" class="form-label">
+                                        <i class="bi bi-person-badge me-2"></i> 提交人姓名
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="submitterName" 
+                                           placeholder="请输入提交人姓名..." required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="submitterDepartment" class="form-label">
+                                        <i class="bi bi-building-gear me-2"></i> 所属部门
+                                        <span class="text-danger">*</span>
+                                        <small class="text-muted">(支持智能匹配历史)</small>
+                                    </label>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" id="submitterDepartment" 
+                                               placeholder="输入部门名称，支持智能提示..." 
+                                               autocomplete="off" required>
+                                        <div id="departmentAutocomplete" class="autocomplete-suggestions" style="display: none;">
+                                            <!-- 部门自动补全建议将在这里显示 -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- 行业评分 -->
                             <div class="mb-4">
                                 <h5 class="section-title">

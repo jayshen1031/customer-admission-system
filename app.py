@@ -42,6 +42,11 @@ class CustomerRating(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_name = db.Column(db.String(200), nullable=False)
     customer_type = db.Column(db.String(50), nullable=False)
+    
+    # 提交人信息
+    submitter_name = db.Column(db.String(100), nullable=False)  # 提交人姓名
+    submitter_department = db.Column(db.String(100), nullable=False)  # 提交人部门
+    
     industry_score = db.Column(db.Integer, nullable=False)
     business_type_score = db.Column(db.Integer, nullable=False)
     influence_score = db.Column(db.Integer, nullable=False)
@@ -64,6 +69,8 @@ class CustomerRating(db.Model):
             'id': self.id,
             'customer_name': self.customer_name,
             'customer_type': self.customer_type,
+            'submitter_name': self.submitter_name,
+            'submitter_department': self.submitter_department,
             'industry_score': self.industry_score,
             'business_type_score': self.business_type_score,
             'influence_score': self.influence_score,
@@ -143,6 +150,8 @@ def calculate_rating():
         # 获取评分数据
         customer_name = data.get('customer_name', '')
         customer_type = data.get('customer_type', '')
+        submitter_name = data.get('submitter_name', '')
+        submitter_department = data.get('submitter_department', '')
         industry_score = int(data.get('industry_score', 0))
         business_type_score = int(data.get('business_type_score', 0))
         influence_score = int(data.get('influence_score', 0))
@@ -222,6 +231,8 @@ def calculate_rating():
         new_rating = CustomerRating(
             customer_name=customer_name,
             customer_type=customer_type,
+            submitter_name=submitter_name,
+            submitter_department=submitter_department,
             industry_score=industry_score,
             business_type_score=business_type_score,
             influence_score=influence_score,
@@ -624,6 +635,12 @@ def export_rating_report(rating_id):
         worksheet.write(row, 4, get_customer_type_text(rating.customer_type), value_format)
         
         row += 1
+        worksheet.write(row, 0, '提交人', label_format)
+        worksheet.write(row, 1, rating.submitter_name, value_format)
+        worksheet.write(row, 3, '所属部门', label_format)
+        worksheet.write(row, 4, rating.submitter_department, value_format)
+        
+        row += 1
         worksheet.write(row, 0, '评估日期', label_format)
         worksheet.write(row, 1, rating.created_at.strftime('%Y年%m月%d日 %H:%M'), value_format)
         
@@ -778,23 +795,25 @@ def export_all_ratings():
         worksheet.set_column('A:A', 8)   # 序号
         worksheet.set_column('B:B', 20)  # 客户名称
         worksheet.set_column('C:C', 15)  # 客户类型
-        worksheet.set_column('D:D', 10)  # 综合得分
-        worksheet.set_column('E:E', 8)   # 客户等级
-        worksheet.set_column('F:F', 8)   # 行业
-        worksheet.set_column('G:G', 8)   # 业务类型
-        worksheet.set_column('H:H', 8)   # 影响力
-        worksheet.set_column('I:I', 8)   # 规模
-        worksheet.set_column('J:J', 8)   # 资信
-        worksheet.set_column('K:K', 8)   # 商机
-        worksheet.set_column('L:L', 18)  # 评估时间
+        worksheet.set_column('D:D', 12)  # 提交人
+        worksheet.set_column('E:E', 12)  # 部门
+        worksheet.set_column('F:F', 10)  # 综合得分
+        worksheet.set_column('G:G', 8)   # 客户等级
+        worksheet.set_column('H:H', 8)   # 行业
+        worksheet.set_column('I:I', 8)   # 业务类型
+        worksheet.set_column('J:J', 8)   # 影响力
+        worksheet.set_column('K:K', 8)   # 规模
+        worksheet.set_column('L:L', 8)   # 资信
+        worksheet.set_column('M:M', 8)   # 商机
+        worksheet.set_column('N:N', 18)  # 评估时间
         
         # 标题
-        worksheet.merge_range('A1:L1', '客户评级汇总表', title_format)
+        worksheet.merge_range('A1:N1', '客户评级汇总表', title_format)
         worksheet.set_row(0, 25)
         
         # 表头
         headers = [
-            '序号', '客户名称', '客户类型', '综合得分', '客户等级',
+            '序号', '客户名称', '客户类型', '提交人', '部门', '综合得分', '客户等级',
             '行业评分', '业务类型', '影响力', '规模评分', '资信评分', '商机评分', '评估时间'
         ]
         
@@ -816,8 +835,14 @@ def export_all_ratings():
             # 客户类型
             worksheet.write(row, 2, get_customer_type_text(rating.customer_type), cell_format)
             
+            # 提交人
+            worksheet.write(row, 3, rating.submitter_name, cell_format)
+            
+            # 部门
+            worksheet.write(row, 4, rating.submitter_department, cell_format)
+            
             # 综合得分
-            worksheet.write(row, 3, f'{rating.total_score}分', score_format)
+            worksheet.write(row, 5, f'{rating.total_score}分', score_format)
             
             # 客户等级
             grade_format = workbook.add_format({
@@ -828,18 +853,18 @@ def export_all_ratings():
                 'border': 1,
                 'font_color': get_grade_color(rating.grade)
             })
-            worksheet.write(row, 4, rating.grade, grade_format)
+            worksheet.write(row, 6, rating.grade, grade_format)
             
             # 各项评分
-            worksheet.write(row, 5, rating.industry_score, cell_format)
-            worksheet.write(row, 6, rating.business_type_score, cell_format)
-            worksheet.write(row, 7, rating.influence_score, cell_format)
-            worksheet.write(row, 8, rating.logistics_scale_score, cell_format)
-            worksheet.write(row, 9, rating.credit_score, cell_format)
-            worksheet.write(row, 10, rating.profit_estimate_score, cell_format)
+            worksheet.write(row, 7, rating.industry_score, cell_format)
+            worksheet.write(row, 8, rating.business_type_score, cell_format)
+            worksheet.write(row, 9, rating.influence_score, cell_format)
+            worksheet.write(row, 10, rating.logistics_scale_score, cell_format)
+            worksheet.write(row, 11, rating.credit_score, cell_format)
+            worksheet.write(row, 12, rating.profit_estimate_score, cell_format)
             
             # 评估时间
-            worksheet.write(row, 11, rating.created_at.strftime('%Y-%m-%d %H:%M'), cell_format)
+            worksheet.write(row, 13, rating.created_at.strftime('%Y-%m-%d %H:%M'), cell_format)
         
         # 统计信息
         row += 2
@@ -1127,6 +1152,100 @@ def add_company_suggestion():
             'success': False,
             'error': str(e)
         }), 500
+
+
+@app.route('/api/department-autocomplete', methods=['GET'])
+def department_autocomplete():
+    """部门名称自动补全API"""
+    try:
+        query = request.args.get('q', '').strip()
+        limit = int(request.args.get('limit', 8))
+        
+        # 从数据库获取匹配的部门名称，按使用频率排序
+        if query:
+            # 模糊匹配查询，按使用频率排序
+            departments_query = db.session.query(
+                CustomerRating.submitter_department,
+                db.func.count(CustomerRating.submitter_department).label('usage_count')
+            ).filter(
+                CustomerRating.is_deleted == False,
+                CustomerRating.submitter_department.like(f'%{query}%'),
+                CustomerRating.submitter_department.isnot(None),
+                CustomerRating.submitter_department != ''
+            ).group_by(
+                CustomerRating.submitter_department
+            ).order_by(
+                db.func.count(CustomerRating.submitter_department).desc()
+            ).limit(limit)
+        else:
+            # 获取最常用的部门（如果没有查询词）
+            departments_query = db.session.query(
+                CustomerRating.submitter_department,
+                db.func.count(CustomerRating.submitter_department).label('usage_count')
+            ).filter(
+                CustomerRating.is_deleted == False,
+                CustomerRating.submitter_department.isnot(None),
+                CustomerRating.submitter_department != ''
+            ).group_by(
+                CustomerRating.submitter_department
+            ).order_by(
+                db.func.count(CustomerRating.submitter_department).desc()
+            ).limit(limit)
+        
+        departments = departments_query.all()
+        
+        # 处理建议
+        suggestions = []
+        
+        # 添加预设的常用部门（如果查询为空或没有历史数据）
+        default_departments = [
+            '销售部', '业务部', '客户服务部', '市场部', 
+            '运营部', '项目部', '财务部', '人事部'
+        ]
+        
+        # 先添加数据库中的部门
+        for dept, count in departments:
+            if dept and dept.strip():  # 确保部门名不为空
+                suggestions.append({
+                    'name': dept.strip(),
+                    'count': count,
+                    'type': 'history'
+                })
+        
+        # 处理预设部门
+        existing_names = {s['name'] for s in suggestions}
+        for dept in default_departments:
+            if dept not in existing_names and len(suggestions) < limit:
+                # 如果有查询词，检查是否匹配
+                if query:
+                    # 简单的包含匹配
+                    if query in dept:
+                        suggestions.append({
+                            'name': dept,
+                            'count': 0,
+                            'type': 'default'
+                        })
+                else:
+                    # 没有查询词，直接添加预设部门
+                    suggestions.append({
+                        'name': dept,
+                        'count': 0,
+                        'type': 'default'
+                    })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'suggestions': suggestions,
+                'query': query
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
 
 
 @app.route('/api/intelligent-search', methods=['POST'])
