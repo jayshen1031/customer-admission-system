@@ -282,48 +282,35 @@
                                 <h5 class="section-title">
                                     <i class="bi bi-shield me-2"></i> 5. 客户资信评分（权重25%）
                                 </h5>
+                                
+                                <!-- 资信评分按钮区域 -->
                                 <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="rating-option">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="creditScore" value="25" id="credit1">
-                                                <label class="form-check-label" for="credit1">
-                                                    优秀（90-100） <span class="weight-tag">25分</span>
-                                                </label>
-                                            </div>
+                                    <div class="col-md-8">
+                                        <div class="alert alert-info mb-3 py-2">
+                                            <i class="bi bi-info-circle me-2"></i> 点击下方按钮填写详细的客户资信评分表
                                         </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="rating-option">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="creditScore" value="20" id="credit2">
-                                                <label class="form-check-label" for="credit2">
-                                                    良好（80-89） <span class="weight-tag">20分</span>
-                                                </label>
-                                            </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">评分结果：</span>
+                                            <span id="creditRatingDisplay" class="text-muted">请填写资信评分表</span>
                                         </div>
+                                        <button type="button" class="btn btn-outline-primary mt-2 w-100" data-bs-toggle="modal" data-bs-target="#creditRatingModal">
+                                            <i class="bi bi-pencil me-2"></i> 填写资信评分表
+                                        </button>
                                     </div>
-                                    <div class="col-md-3">
-                                        <div class="rating-option">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="creditScore" value="15" id="credit3">
-                                                <label class="form-check-label" for="credit3">
-                                                    一般（65-79） <span class="weight-tag">15分</span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="rating-option">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="creditScore" value="5" id="credit4">
-                                                <label class="form-check-label" for="credit4">
-                                                    较差（<65） <span class="weight-tag">5分</span>
-                                                </label>
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <h6 class="card-title mb-2">当前评分</h6>
+                                                <div class="display-6 fw-bold text-primary" id="creditScoreDisplay">0</div>
+                                                <small class="text-muted">满分25分</small>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <!-- 隐藏的输入字段存储资信评分 -->
+                                <input type="hidden" id="creditScore" name="creditScore" value="">
+                                <input type="hidden" id="creditRating" name="creditRating" value="">
                             </div>
 
                             <!-- 商机预估 -->
@@ -447,6 +434,209 @@
                             <p class="text-muted">完成所有必填项后点击"计算评级"按钮</p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 资信评分模态框 -->
+    <div class="modal fade" id="creditRatingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-clipboard2-data me-2"></i> 客户资信评分表</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info mb-4 py-2">
+                        <i class="bi bi-info-circle me-2"></i> 填写本表后，评分将自动映射到主评分表的资信评分项
+                    </div>
+                    
+                    <form id="creditRatingForm">
+                        <!-- 基本信息部分 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="section-title"><i class="bi bi-info-circle me-2"></i> 一、基本信息（权重35%）</h5>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">企业性质（权重10%）</label>
+                                <select class="form-select" name="enterpriseNature">
+                                    <option value="">--请选择企业性质--</option>
+                                    <option value="8">合资企业 (8分)</option>
+                                    <option value="8">独资企业 (8分)</option>
+                                    <option value="10">国有企业 (10分)</option>
+                                    <option value="6">民营企业 (6分)</option>
+                                    <option value="6">私营企业 (6分)</option>
+                                    <option value="3">其他 (3分)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">注册资本（权重10%）</label>
+                                <select class="form-select" name="registeredCapital">
+                                    <option value="">--请选择注册资本--</option>
+                                    <option value="10">≥RMB1亿 (10分)</option>
+                                    <option value="8">RMB1000万-1亿 (8分)</option>
+                                    <option value="6">RMB500万-1000万 (6分)</option>
+                                    <option value="3">＜RMB500万 (3分)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">实缴资本（权重10%）</label>
+                                <select class="form-select" name="paidInCapital">
+                                    <option value="">--请选择实缴资本--</option>
+                                    <option value="10">≥RMB1亿 (10分)</option>
+                                    <option value="8">RMB1000万-1亿 (8分)</option>
+                                    <option value="6">RMB500万-1000万 (6分)</option>
+                                    <option value="3">＜RMB500万 (3分)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">是否为生产企业（权重5%）</label>
+                                <select class="form-select" name="isManufacturer">
+                                    <option value="">--是否生产企业--</option>
+                                    <option value="5">是 (5分)</option>
+                                    <option value="2">否 (2分)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- 经营状态部分 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="section-title"><i class="bi bi-graph-up me-2"></i> 二、经营状态（权重40%）</h5>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">主营业务收入（权重10%）</label>
+                                <select class="form-select" name="mainBusinessIncome">
+                                    <option value="">--请选择主营业务收入--</option>
+                                    <option value="10">≥RMB10亿/年 (10分)</option>
+                                    <option value="8">RMB1亿-10亿/年 (8分)</option>
+                                    <option value="5">RMB5000万-1亿/年 (5分)</option>
+                                    <option value="3">RMB1000万-5000万/年 (3分)</option>
+                                    <option value="2">＜RMB1000万/年 (2分)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">主要供应商（权重5%）</label>
+                                <select class="form-select" name="mainSupplier">
+                                    <option value="">--请选择主要供应商--</option>
+                                    <option value="5">国企央企/上市企业/外资企业 (5分)</option>
+                                    <option value="3">民企/自然人 (3分)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">付款方式（权重10%）</label>
+                                <select class="form-select" name="paymentMethod">
+                                    <option value="">--请选择付款方式--</option>
+                                    <option value="10">现金/转账/电汇 (10分)</option>
+                                    <option value="5">支票/汇票/银行承兑 (5分)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">账期（权重10%）</label>
+                                <select class="form-select" name="accountPeriod">
+                                    <option value="">--请选择账期--</option>
+                                    <option value="10">票结/预付/15天 (10分)</option>
+                                    <option value="9">30天/45天 (9分)</option>
+                                    <option value="8">60天 (8分)</option>
+                                    <option value="7">90天 (7分)</option>
+                                    <option value="5">＞90天 (5分)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">成立年限（权重5%）</label>
+                                <select class="form-select" name="yearsEstablished">
+                                    <option value="">--请选择成立年限--</option>
+                                    <option value="5">≥10年 (5分)</option>
+                                    <option value="3">2-10年 (3分)</option>
+                                    <option value="1">＜2年 (1分)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- 信用记录部分 -->
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <h5 class="section-title"><i class="bi bi-shield-check me-2"></i> 三、信用记录（权重25%）</h5>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">抵押担保情况（权重5%）</label>
+                                <select class="form-select" name="mortgageGuarantee">
+                                    <option value="">--请选择--</option>
+                                    <option value="5">无 (5分)</option>
+                                    <option value="2">有 (2分)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">失信记录（权重6%）</label>
+                                <select class="form-select" name="dishonestyRecord">
+                                    <option value="">--请选择--</option>
+                                    <option value="6">无 (6分)</option>
+                                    <option value="3">有，已解除 (3分)</option>
+                                    <option value="0">有，尚未解除 (0分)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">工商处罚记录（权重8%）</label>
+                                <select class="form-select" name="penaltyRecord">
+                                    <option value="">--请选择--</option>
+                                    <option value="8">无 (8分)</option>
+                                    <option value="6">有，单次 (6分)</option>
+                                    <option value="0">有，两次及以上 (0分)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">付款信用情况（权重4%）</label>
+                                <select class="form-select" name="paymentCredit">
+                                    <option value="">--请选择--</option>
+                                    <option value="4">付款及时，信用良好 (4分)</option>
+                                    <option value="0">付款口碑差 (0分)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">客户同行评价（权重2%）</label>
+                                <select class="form-select" name="peerReview">
+                                    <option value="">--请选择--</option>
+                                    <option value="2">评价良好 (2分)</option>
+                                    <option value="0">评价一般 (0分)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div class="card mt-4">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">当前资信评分结果</h6>
+                            <div class="d-flex justify-content-center align-items-center">
+                                <div class="score-display px-4 py-3 w-100">
+                                    <div class="fs-2 fw-bold text-primary" id="creditTotalScore">0</div>
+                                    <div class="mt-2">等级: <span class="fw-bold" id="creditLevel">未计算</span></div>
+                                </div>
+                            </div>
+                            <div class="alert alert-warning mt-4 mb-0 py-2">
+                                <i class="bi bi-exclamation-triangle me-2"></i> 
+                                <span>客户资质评分＜65分的由直属领导审批后方可开展业务</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveCreditRating">保存评分</button>
                 </div>
             </div>
         </div>

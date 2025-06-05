@@ -107,7 +107,7 @@ function validateForm() {
     }
     
     // 检查所有必填的评分项
-    const requiredFields = ['industry', 'businessType', 'influence', 'logisticsScale', 'creditScore', 'profitEstimate'];
+    const requiredFields = ['industry', 'businessType', 'influence', 'logisticsScale', 'profitEstimate'];
     
     for (const field of requiredFields) {
         const selectedInput = document.querySelector(`input[name="${field}"]:checked`);
@@ -115,6 +115,11 @@ function validateForm() {
             alert(`请选择${getFieldDisplayName(field)}`);
             return false;
         }
+    }
+    
+    // 验证资信评分
+    if (!validateCreditScore()) {
+        return false;
     }
     
     return true;
@@ -159,8 +164,8 @@ function collectFormData() {
         influence_detail: getSelectedText('influence'),
         logistics_scale_score: getSelectedValue('logisticsScale'),
         logistics_scale_detail: getSelectedText('logisticsScale'),
-        credit_score: getSelectedValue('creditScore'),
-        credit_detail: getSelectedText('creditScore'),
+        credit_score: parseInt(creditScoreValue) || 0,
+        credit_detail: creditRatingText,
         profit_estimate_score: getSelectedValue('profitEstimate'),
         profit_estimate_detail: getSelectedText('profitEstimate')
     };
@@ -239,4 +244,119 @@ function getGradeClass(grade) {
         case 'C': return 'c-bg';
         default: return 'c-bg';
     }
-} 
+}
+
+// 全局变量存储资信评分值
+let creditScoreValue = '';
+let creditRatingText = "请填写资信评分表";
+
+// 资信评分表相关功能
+document.addEventListener('DOMContentLoaded', function() {
+    // 为资信评分表单添加变更事件
+    const creditForm = document.getElementById('creditRatingForm');
+    if (creditForm) {
+        creditForm.addEventListener('change', calculateCreditScore);
+    }
+
+    // 保存资信评分按钮事件
+    const saveCreditBtn = document.getElementById('saveCreditRating');
+    if (saveCreditBtn) {
+        saveCreditBtn.addEventListener('click', function() {
+            // 计算并保存资信评分
+            calculateCreditScore();
+            
+            // 更新主表单资信评分
+            const creditScoreElement = document.getElementById('creditScore');
+            const creditRatingElement = document.getElementById('creditRating');
+            const creditDisplayElement = document.getElementById('creditRatingDisplay');
+            const creditScoreDisplayElement = document.getElementById('creditScoreDisplay');
+            
+            if (creditScoreElement && creditRatingElement && creditDisplayElement && creditScoreDisplayElement) {
+                creditScoreElement.value = creditScoreValue;
+                creditRatingElement.value = creditRatingText;
+                creditDisplayElement.textContent = creditRatingText;
+                creditScoreDisplayElement.textContent = creditScoreValue;
+            }
+            
+            // 关闭模态框
+            const modalElement = document.getElementById('creditRatingModal');
+            let modal = bootstrap.Modal.getInstance(modalElement);
+            if (!modal) {
+                modal = new bootstrap.Modal(modalElement);
+            }
+            modal.hide();
+        });
+    }
+    
+    // 清空资信评分按钮事件（如果需要）
+    const resetCreditBtn = document.querySelector('button[type="reset"]');
+    if (resetCreditBtn) {
+        resetCreditBtn.addEventListener('click', function() {
+            // 清除资信评分
+            document.getElementById('creditRatingDisplay').textContent = "请填写资信评分表";
+            document.getElementById('creditScoreDisplay').textContent = "0";
+            creditScoreValue = '';
+            creditRatingText = "请填写资信评分表";
+        });
+    }
+});
+
+// 计算资信评分函数
+function calculateCreditScore() {
+    const form = document.getElementById('creditRatingForm');
+    const formData = new FormData(form);
+    
+    let totalScore = 0;
+    let scoreBreakdown = [];
+    
+    // 计算各项得分
+    for (let [name, value] of formData.entries()) {
+        if (value && !isNaN(value)) {
+            const score = parseFloat(value);
+            totalScore += score;
+            
+            // 获取选项文本
+            const select = form.querySelector(`select[name="${name}"]`);
+            const selectedOption = select.options[select.selectedIndex];
+            scoreBreakdown.push(`${selectedOption.textContent}`);
+        }
+    }
+    
+    // 更新总分显示
+    document.getElementById('creditTotalScore').textContent = totalScore.toFixed(0);
+    
+    // 确定信用等级
+    let creditLevel = '';
+    let finalScore = 0;
+    
+    if (totalScore >= 90) {
+        creditLevel = '优秀';
+        finalScore = 25;
+    } else if (totalScore >= 80) {
+        creditLevel = '良好';
+        finalScore = 20;
+    } else if (totalScore >= 65) {
+        creditLevel = '一般';
+        finalScore = 15;
+    } else {
+        creditLevel = '较差';
+        finalScore = 5;
+    }
+    
+    document.getElementById('creditLevel').textContent = creditLevel;
+    
+    // 更新全局变量
+    creditScoreValue = finalScore.toString();
+    creditRatingText = `${creditLevel}（${totalScore.toFixed(0)}分）`;
+}
+
+// 验证资信评分是否已填写
+function validateCreditScore() {
+    if (!creditScoreValue || creditScoreValue === '') {
+        alert('请先填写客户资信评分表！');
+        return false;
+    }
+    return true;
+}
+
+ 
