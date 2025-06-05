@@ -5,6 +5,7 @@ import json
 import os
 import xlsxwriter
 import io
+import re
 from external_data_service import ExternalDataService
 from company_autocomplete_service import autocomplete_service
 
@@ -91,6 +92,37 @@ with app.app_context():
 
 # 初始化外部数据服务
 external_service = ExternalDataService()
+
+def clean_filename(name):
+    """清理文件名中的非法字符，保留中文、英文、数字"""
+    if not name:
+        return ""
+    
+    # 第一步：提取有意义的字符（中文、英文、数字）
+    meaningful_chars = re.sub(r'[^\w\u4e00-\u9fff]', '', name)
+    
+    if meaningful_chars:
+        # 如果有意义字符超过3个，直接使用
+        if len(meaningful_chars) >= 3:
+            return meaningful_chars
+        
+        # 否则进行标准清理，但优先保留有意义的内容
+        cleaned = re.sub(r'[<>:"/\\|?*]', '_', name)  # 替换Windows不允许的字符
+        cleaned = re.sub(r'[^\w\s\-_\u4e00-\u9fff\(\)]', '_', cleaned)  # 保留中文、字母、数字、括号、下划线、中横线
+        cleaned = re.sub(r'\s+', '_', cleaned)  # 空格替换为下划线
+        cleaned = re.sub(r'_+', '_', cleaned)  # 多个下划线合并为一个
+        result = cleaned.strip('_')  # 去除首尾下划线
+        
+        # 检查结果的质量
+        meaningful_count = len(re.findall(r'[\w\u4e00-\u9fff]', result))
+        if meaningful_count < 3:
+            # 如果有意义字符太少，直接使用提取的有意义字符
+            return meaningful_chars
+        
+        return result
+    else:
+        # 如果没有有意义的字符，返回空字符串
+        return ""
 
 @app.route('/')
 def index():
@@ -669,8 +701,12 @@ def export_rating_report(rating_id):
         workbook.close()
         output.seek(0)
         
-        # 生成文件名
-        filename = f'客户评级报告_{rating.customer_name}_{rating.created_at.strftime("%Y%m%d_%H%M")}.xlsx'
+        # 生成文件名 - 清理客户名称中的特殊字符
+        safe_customer_name = clean_filename(rating.customer_name)
+        if not safe_customer_name:  # 如果清理后为空，使用默认名称
+            safe_customer_name = f"客户{rating.id}"
+            
+        filename = f'客户评级报告_{safe_customer_name}_{rating.created_at.strftime("%Y%m%d_%H%M")}.xlsx'
         
         return send_file(
             output,
@@ -1168,7 +1204,15 @@ def _has_local_company_data(company_name):
         "字节跳动有限公司", "字节跳动科技有限公司",
         "三星(中国)投资有限公司", "三星电子株式会社",
         "三星半导体(中国)研究开发有限公司", "三星显示(中国)有限公司",
-        "三星SDI环新(西安)动力电池有限公司"
+        "三星SDI环新(西安)动力电池有限公司",
+        # 维斯登系列企业
+        "维斯登光电有限公司", "维斯登科技(上海)有限公司",
+        "维斯登设备制造有限公司", "维斯登光电技术有限公司",
+        "维斯登半导体设备有限公司",
+        # 科能亚太铸造系列企业
+        "科能亚太铸造有限公司", "科能亚太铸造股份有限公司",
+        "科能亚太铸造科技有限公司", "科能亚太铸造武汉有限公司",
+        "科能亚太铸造武汉股份有限公司", "科能亚太铸造武汉科技有限公司"
     ]
     return company_name in local_companies
 

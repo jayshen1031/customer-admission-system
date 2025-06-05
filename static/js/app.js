@@ -549,6 +549,10 @@ let creditRatingText = "请填写资信评分表";
 
 // 资信评分表相关功能
 document.addEventListener('DOMContentLoaded', function() {
+    // 初始化商机预估评分交互
+    setupProfitEstimateInteraction();
+    addProfitSelectAnimation();
+    
     // 为资信评分表单添加变更事件
     const creditForm = document.getElementById('creditRatingForm');
     if (creditForm) {
@@ -600,6 +604,11 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('creditScoreDisplay').textContent = "0";
             creditScoreValue = '';
             creditRatingText = "请填写资信评分表";
+            
+            // 清除商机预估评分的选中状态
+            document.querySelectorAll('.profit-card').forEach(card => {
+                card.classList.remove('profit-selected');
+            });
         });
     }
 });
@@ -660,6 +669,141 @@ function validateCreditScore() {
         return false;
     }
     return true;
+}
+
+// 设置商机预估评分的交互效果
+function setupProfitEstimateInteraction() {
+    const profitRadios = document.querySelectorAll('input[name="profitEstimate"]');
+    console.log(`🎯 找到 ${profitRadios.length} 个商机预估选项`);
+    
+    profitRadios.forEach((radio, index) => {
+        console.log(`📌 绑定事件监听器到选项 ${index + 1}: ${radio.id}`);
+        
+        radio.addEventListener('change', function() {
+            console.log(`✅ 商机预估选项被选中: ${this.id} (值: ${this.value})`);
+            
+            // 移除所有选中状态
+            const allCards = document.querySelectorAll('.profit-card');
+            console.log(`🔄 清除 ${allCards.length} 个卡片的选中状态`);
+            allCards.forEach(card => {
+                card.classList.remove('profit-selected');
+            });
+            
+            // 为当前选中的添加状态
+            if (this.checked) {
+                // 找到包含当前radio的profit-card
+                const selectedCard = this.closest('.profit-card');
+                console.log(`🎯 找到选中的卡片:`, selectedCard);
+                
+                if (selectedCard) {
+                    selectedCard.classList.add('profit-selected');
+                    console.log(`🎨 已添加 profit-selected 类到卡片`);
+                    
+                    // 添加选中动画
+                    selectedCard.style.animation = 'none';
+                    selectedCard.offsetHeight; // 触发重排
+                    selectedCard.style.animation = 'profitSelectAnimation 0.4s ease-out';
+                    console.log(`🎬 已添加选中动画`);
+                } else {
+                    console.error(`❌ 无法找到包含 ${this.id} 的 .profit-card 元素`);
+                }
+            }
+        });
+    });
+    
+    console.log(`✅ 商机预估评分交互设置完成`);
+}
+
+// 商机预估评分选中动画样式（通过JavaScript动态添加到CSS）
+function addProfitSelectAnimation() {
+    // 检查是否已经添加过样式
+    if (document.getElementById('profit-select-styles')) {
+        return;
+    }
+    
+    const style = document.createElement('style');
+    style.id = 'profit-select-styles';
+    style.textContent = `
+        /* 商机预估评分选中效果 - 高优先级样式 */
+        .profit-card.profit-selected {
+            border-color: #667eea !important;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
+            transform: translateY(-3px) !important;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(102, 126, 234, 0.06) 100%) !important;
+            position: relative !important;
+            z-index: 10 !important;
+        }
+        
+        .profit-card.profit-selected::before {
+            height: 6px !important;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4) !important;
+        }
+        
+        .profit-card.profit-selected .profit-title {
+            color: #667eea !important;
+            font-weight: 800 !important;
+        }
+        
+        .profit-card.profit-selected .profit-icon {
+            transform: scale(1.2) !important;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+        }
+        
+        .profit-card.profit-selected .profit-score {
+            color: #667eea !important;
+            animation: scoreGlow 0.8s ease-in-out infinite alternate !important;
+            text-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
+            font-weight: 900 !important;
+        }
+        
+        .profit-card.profit-selected .profit-badge {
+            transform: scale(1.15) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        .profit-card.profit-selected .profit-desc {
+            color: #4b5563 !important;
+            font-weight: 600 !important;
+        }
+        
+        /* 覆盖悬停效果 */
+        .profit-card.profit-selected:hover {
+            transform: translateY(-3px) !important;
+            border-color: #667eea !important;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5) !important;
+        }
+        
+        @keyframes profitSelectAnimation {
+            0% { 
+                transform: translateY(0) scale(1);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            }
+            50% { 
+                transform: translateY(-5px) scale(1.03);
+                box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+            }
+            100% { 
+                transform: translateY(-3px) scale(1);
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            }
+        }
+        
+        @keyframes scoreGlow {
+            0% { 
+                opacity: 1; 
+                transform: scale(1);
+                text-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            }
+            100% { 
+                opacity: 0.8; 
+                transform: scale(1.05);
+                text-shadow: 0 4px 16px rgba(102, 126, 234, 0.6);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    console.log('✅ 商机预估评分样式已添加');
 }
 
 // 自动获取企业信息功能
