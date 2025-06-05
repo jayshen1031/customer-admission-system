@@ -65,10 +65,43 @@
                         <!-- 统计信息面板 -->
                         <div id="statsSection" class="stats-panel mb-4">
                             <div class="stats-header">
-                                <h5 class="stats-title">
-                                    <i class="bi bi-graph-up me-2"></i>客户评级统计概览
-                                </h5>
-                                <p class="stats-subtitle">实时统计所有客户评级分布情况</p>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h5 class="stats-title mb-1">
+                                            <i class="bi bi-graph-up me-2"></i>客户评级统计概览
+                                        </h5>
+                                        <p class="stats-subtitle mb-0">实时统计客户评级分布情况</p>
+                                    </div>
+                                    <div class="time-filter">
+                                        <select id="timeRangeSelect" class="form-select form-select-sm" onchange="updateStatsByTimeRange()">
+                                            <option value="1month">近一个月</option>
+                                            <option value="3months">近三个月</option>
+                                            <option value="6months">近半年</option>
+                                            <option value="1year">近一年</option>
+                                            <option value="all">全部时间</option>
+                                            <option value="custom">自定义时间</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- 自定义时间选择器 -->
+                                <div id="customTimeRange" class="custom-time-range" style="display: none;">
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label small">开始日期</label>
+                                            <input type="date" id="startDate" class="form-control form-control-sm">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">结束日期</label>
+                                            <input type="date" id="endDate" class="form-control form-control-sm">
+                                        </div>
+                                        <div class="col-md-4 d-flex align-items-end">
+                                            <button type="button" class="btn btn-primary btn-sm w-100" onclick="applyCustomTimeRange()">
+                                                <i class="bi bi-search me-1"></i>筛选
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             
                             <div class="stats-grid">
@@ -115,6 +148,11 @@
                                         <div class="stat-description">一般/风险客户（<80分）</div>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <!-- 时间范围描述 -->
+                            <div class="stats-time-info" id="timeRangeInfo">
+                                统计时间：近一个月
                             </div>
                         </div>
                         

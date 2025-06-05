@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 确保Bootstrap加载后再初始化
     waitForBootstrap().then(() => {
         loadHistory();
+        loadStatistics(); // 加载统计信息
     });
 });
 
@@ -98,7 +99,6 @@ async function loadHistory(page = 1) {
             } else {
                 renderHistoryTable(allRatings);
                 renderPagination();
-                updateStatistics(result.data);
                 showHistoryTable();
             }
             
@@ -144,31 +144,79 @@ function showNoRecords() {
     document.getElementById('exportSelectedBtn').disabled = true;
 }
 
+// 加载统计信息
+async function loadStatistics(timeRange = '1month', startDate = null, endDate = null) {
+    try {
+        let url = `/api/statistics?time_range=${timeRange}`;
+        if (timeRange === 'custom' && startDate && endDate) {
+            url += `&start_date=${startDate}&end_date=${endDate}`;
+        }
+        
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (result.success) {
+            updateStatistics(result.data);
+        } else {
+            console.error('Failed to load statistics:', result.error);
+            showToast('加载统计信息失败', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading statistics:', error);
+        showToast('加载统计信息失败: ' + error.message, 'error');
+    }
+}
+
 // 更新统计信息
 function updateStatistics(data) {
     document.getElementById('totalCount').textContent = data.total || 0;
+    document.getElementById('aplusCount').textContent = data.aplus_count || 0;
+    document.getElementById('aCount').textContent = data.a_count || 0;
+    document.getElementById('bcCount').textContent = (data.b_count || 0) + (data.c_count || 0);
     
-    let aplusCount = 0, aCount = 0, bcCount = 0;
+    // 更新时间范围描述
+    const timeRangeInfo = document.getElementById('timeRangeInfo');
+    if (timeRangeInfo) {
+        timeRangeInfo.textContent = `统计时间：${data.time_description || '近一个月'}`;
+    }
+}
+
+// 时间范围改变时更新统计
+function updateStatsByTimeRange() {
+    const timeRange = document.getElementById('timeRangeSelect').value;
+    const customTimeRange = document.getElementById('customTimeRange');
     
-    if (allRatings.length > 0) {
-        allRatings.forEach(rating => {
-            switch(rating.grade) {
-                case 'A+':
-                    aplusCount++;
-                    break;
-                case 'A':
-                    aCount++;
-                    break;
-                default:
-                    bcCount++;
-                    break;
-            }
-        });
+    if (timeRange === 'custom') {
+        customTimeRange.style.display = 'block';
+        // 设置默认日期
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - 1);
+        
+        document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+        document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+    } else {
+        customTimeRange.style.display = 'none';
+        loadStatistics(timeRange);
+    }
+}
+
+// 应用自定义时间范围
+function applyCustomTimeRange() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    if (!startDate || !endDate) {
+        showToast('请选择开始日期和结束日期', 'warning');
+        return;
     }
     
-    document.getElementById('aplusCount').textContent = aplusCount;
-    document.getElementById('aCount').textContent = aCount;
-    document.getElementById('bcCount').textContent = bcCount;
+    if (new Date(startDate) > new Date(endDate)) {
+        showToast('开始日期不能晚于结束日期', 'warning');
+        return;
+    }
+    
+    loadStatistics('custom', startDate, endDate);
 }
 
 // 渲染历史记录表格

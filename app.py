@@ -235,6 +235,86 @@ def history_page():
     """历史记录页面"""
     return render_template('history.html')
 
+@app.route('/api/statistics', methods=['GET'])
+def get_statistics():
+    """获取统计信息"""
+    try:
+        # 获取时间筛选参数
+        time_range = request.args.get('time_range', '1month')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        # 构建查询条件
+        query = CustomerRating.query
+        
+        if time_range == 'custom' and start_date and end_date:
+            # 自定义时间范围
+            start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
+            end_datetime = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
+            query = query.filter(CustomerRating.created_at >= start_datetime)
+            query = query.filter(CustomerRating.created_at < end_datetime)
+        elif time_range != 'all':
+            # 预设时间范围
+            now = datetime.now()
+            if time_range == '1month':
+                start_datetime = now - timedelta(days=30)
+            elif time_range == '3months':
+                start_datetime = now - timedelta(days=90)
+            elif time_range == '6months':
+                start_datetime = now - timedelta(days=180)
+            elif time_range == '1year':
+                start_datetime = now - timedelta(days=365)
+            else:
+                start_datetime = None
+                
+            if start_datetime:
+                query = query.filter(CustomerRating.created_at >= start_datetime)
+        
+        # 获取筛选后的记录
+        ratings = query.all()
+        
+        # 计算统计信息
+        total_count = len(ratings)
+        aplus_count = len([r for r in ratings if r.grade == 'A+'])
+        a_count = len([r for r in ratings if r.grade == 'A'])
+        b_count = len([r for r in ratings if r.grade == 'B'])
+        c_count = len([r for r in ratings if r.grade == 'C'])
+        
+        # 计算时间范围描述
+        if time_range == 'custom' and start_date and end_date:
+            time_desc = f"{start_date} 至 {end_date}"
+        elif time_range == '1month':
+            time_desc = "近一个月"
+        elif time_range == '3months':
+            time_desc = "近三个月"
+        elif time_range == '6months':
+            time_desc = "近半年"
+        elif time_range == '1year':
+            time_desc = "近一年"
+        else:
+            time_desc = "全部时间"
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total': total_count,
+                'aplus_count': aplus_count,
+                'a_count': a_count,
+                'b_count': b_count,
+                'c_count': c_count,
+                'time_range': time_range,
+                'time_description': time_desc,
+                'start_date': start_date,
+                'end_date': end_date
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
+
 @app.route('/api/rating/<int:rating_id>/export', methods=['GET'])
 def export_rating_report(rating_id):
     """导出客户评级报告为Excel"""
