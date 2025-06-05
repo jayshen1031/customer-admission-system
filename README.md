@@ -336,7 +336,7 @@ A: 删除`customer_rating.db`文件，重启应用即可重新初始化。
 
 如有问题或建议，请通过以下方式联系：
 
-- �� 邮箱：support@example.com
+- 📧 邮箱：jayshen1031@gmail.com
 - 🐛 Bug报告：通过GitHub Issues
 - 💬 技术交流：项目讨论区
 
