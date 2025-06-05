@@ -5,6 +5,7 @@ import json
 import os
 import xlsxwriter
 import io
+from external_data_service import ExternalDataService
 
 app = Flask(__name__)
 
@@ -54,6 +55,9 @@ class CustomerRating(db.Model):
 # 创建数据库表
 with app.app_context():
     db.create_all()
+
+# 初始化外部数据服务
+external_service = ExternalDataService()
 
 @app.route('/')
 def index():
@@ -731,6 +735,84 @@ def get_profit_text(score):
         return '≥12万毛利'
     else:
         return '<12万毛利'
+
+@app.route('/api/external-company-data', methods=['POST'])
+def get_external_company_data():
+    """获取外部企业数据API"""
+    try:
+        data = request.get_json()
+        company_name = data.get('company_name', '').strip()
+        
+        if not company_name:
+            return jsonify({'error': '请输入企业名称'}), 400
+            
+        # 调用外部数据服务
+        company_info = external_service.search_company_info(company_name)
+        
+        if not company_info or not company_info.company_name:
+            return jsonify({'error': '未找到该企业信息'}), 404
+            
+        # 获取资信评分映射
+        credit_mapping = external_service.get_credit_score_mapping(company_info)
+        
+        # 构建响应数据
+        response_data = {
+            'company_info': {
+                'company_name': company_info.company_name,
+                'legal_representative': company_info.legal_representative,
+                'registered_capital': company_info.registered_capital,
+                'establishment_date': company_info.establishment_date,
+                'business_status': company_info.business_status,
+                'industry': company_info.industry,
+                'credit_code': company_info.credit_code,
+                'address': company_info.address,
+                'business_scope': company_info.business_scope,
+                'years_established': company_info.years_established
+            },
+            'credit_mapping': credit_mapping,
+            'analysis': {
+                'enterprise_nature': company_info.enterprise_nature,
+                'dishonesty_record': company_info.dishonesty_record,
+                'penalty_record': company_info.penalty_record,
+                'payment_credit': company_info.payment_credit,
+                'peer_review': company_info.peer_review
+            }
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        return jsonify({'error': f'获取企业数据失败: {str(e)}'}), 500
+
+@app.route('/api/test-external-api', methods=['GET'])
+def test_external_api():
+    """测试外部API连接"""
+    try:
+        # 测试小米公司信息
+        test_company = "小米科技有限责任公司"
+        company_info = external_service.search_company_info(test_company)
+        
+        if company_info and company_info.company_name:
+            return jsonify({
+                'status': 'success',
+                'message': '外部API连接正常',
+                'test_result': {
+                    'company_name': company_info.company_name,
+                    'legal_representative': company_info.legal_representative,
+                    'registered_capital': company_info.registered_capital
+                }
+            })
+        else:
+            return jsonify({
+                'status': 'failed',
+                'message': '外部API无响应或数据为空'
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'测试失败: {str(e)}'
+        })
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True) 

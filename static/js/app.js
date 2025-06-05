@@ -258,6 +258,12 @@ document.addEventListener('DOMContentLoaded', function() {
         creditForm.addEventListener('change', calculateCreditScore);
     }
 
+    // 自动获取企业信息按钮事件
+    const autoFillBtn = document.getElementById('autoFillBtn');
+    if (autoFillBtn) {
+        autoFillBtn.addEventListener('click', autoFillCompanyInfo);
+    }
+
     // 保存资信评分按钮事件
     const saveCreditBtn = document.getElementById('saveCreditRating');
     if (saveCreditBtn) {
@@ -357,6 +363,120 @@ function validateCreditScore() {
         return false;
     }
     return true;
+}
+
+// 自动获取企业信息功能
+async function autoFillCompanyInfo() {
+    const companyNameInput = document.getElementById('autoFillCompanyName');
+    const companyName = companyNameInput.value.trim();
+    
+    if (!companyName) {
+        alert('请输入企业名称');
+        companyNameInput.focus();
+        return;
+    }
+    
+    // 显示加载状态
+    showAutoFillLoading(true);
+    hideAutoFillMessages();
+    
+    try {
+        const response = await fetch('/api/external-company-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ company_name: companyName })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // 成功获取数据，自动填充表单
+            fillCreditRatingForm(data.credit_mapping, data.company_info);
+            showAutoFillSuccess(`成功获取 ${data.company_info.company_name} 的企业信息`);
+            
+            // 自动计算评分
+            calculateCreditScore();
+            
+        } else {
+            // 处理错误
+            showAutoFillError(data.error || '获取企业信息失败');
+        }
+        
+    } catch (error) {
+        console.error('获取企业信息失败:', error);
+        showAutoFillError('网络连接失败，请检查网络后重试');
+    } finally {
+        showAutoFillLoading(false);
+    }
+}
+
+// 填充资信评分表单
+function fillCreditRatingForm(creditMapping, companyInfo) {
+    const form = document.getElementById('creditRatingForm');
+    
+    // 填充各个选项
+    Object.keys(creditMapping).forEach(fieldName => {
+        const value = creditMapping[fieldName];
+        const select = form.querySelector(`select[name="${fieldName}"]`);
+        if (select) {
+            select.value = value;
+        }
+    });
+    
+    // 可以在这里添加企业基本信息的显示
+    console.log('企业基本信息:', companyInfo);
+}
+
+// 显示/隐藏加载状态
+function showAutoFillLoading(show) {
+    const loadingElement = document.getElementById('autoFillLoading');
+    const button = document.getElementById('autoFillBtn');
+    
+    if (show) {
+        loadingElement.classList.remove('d-none');
+        button.disabled = true;
+        button.innerHTML = '<div class="spinner-border spinner-border-sm me-2" role="status"></div>获取中...';
+    } else {
+        loadingElement.classList.add('d-none');
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-download me-2"></i>自动获取';
+    }
+}
+
+// 显示成功消息
+function showAutoFillSuccess(message) {
+    const resultElement = document.getElementById('autoFillResult');
+    const messageElement = document.getElementById('autoFillMessage');
+    
+    messageElement.textContent = message;
+    resultElement.classList.remove('d-none');
+    
+    // 3秒后自动隐藏
+    setTimeout(() => {
+        resultElement.classList.add('d-none');
+    }, 3000);
+}
+
+// 显示错误消息
+function showAutoFillError(message) {
+    const errorElement = document.getElementById('autoFillError');
+    const messageElement = document.getElementById('autoFillErrorMessage');
+    
+    messageElement.textContent = message;
+    errorElement.classList.remove('d-none');
+    
+    // 5秒后自动隐藏
+    setTimeout(() => {
+        errorElement.classList.add('d-none');
+    }, 5000);
+}
+
+// 隐藏所有自动填充消息
+function hideAutoFillMessages() {
+    document.getElementById('autoFillResult').classList.add('d-none');
+    document.getElementById('autoFillError').classList.add('d-none');
 }
 
  
