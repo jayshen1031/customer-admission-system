@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-rating-app
+  namespace: customer-rating
+  labels:
+    app: customer-rating-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: customer-rating-app
+  template:
+    metadata:
+      labels:
+        app: customer-rating-app
+    spec:
+      containers:
+      - name: customer-rating-app
+        image: customer-rating-system:latest  # 请替换为你的镜像地址
+        ports:
+        - containerPort: 5001
+        env:
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: customer-rating-config
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: customer-rating-config
+              key: DB_PORT
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: customer-rating-config
+              key: DB_NAME
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: customer-rating-config
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: customer-rating-secrets
+              key: DB_PASSWORD
+        - name: FLASK_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: customer-rating-config
+              key: FLASK_ENV
+        - name: DATABASE_URL
+          value: "mysql+pymysql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?charset=utf8mb4"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: app-logs
+          mountPath: /app/logs
+      volumes:
+      - name: app-logs
+        emptyDir: {}
+      imagePullSecrets:
+      - name: regcred  # 如果使用私有镜像仓库
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-rating-service
+  namespace: customer-rating
+spec:
+  selector:
+    app: customer-rating-app
+  ports:
+  - port: 80
+    targetPort: 5001
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: customer-rating-hpa
+  namespace: customer-rating
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: customer-rating-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80 

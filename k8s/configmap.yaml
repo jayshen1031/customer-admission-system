@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: customer-rating-config
+  namespace: customer-rating
+data:
+  DB_HOST: "mysql-service"
+  DB_PORT: "3306"
+  DB_NAME: "customer_rating_system"
+  DB_USER: "app_user"
+  FLASK_ENV: "production"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: customer-rating-secrets
+  namespace: customer-rating
+type: Opaque
+data:
+  # echo -n 'app_password' | base64
+  DB_PASSWORD: YXBwX3Bhc3N3b3Jk
+  # echo -n 'customer_rating_2024' | base64
+  MYSQL_ROOT_PASSWORD: Y3VzdG9tZXJfcmF0aW5nXzIwMjQ= 
