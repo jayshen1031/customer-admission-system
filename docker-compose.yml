@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  customer-rating-system:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_PATH=/app/data/customer_rating.db
+    restart: unless-stopped
+    container_name: customer-rating-system
+    
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s 

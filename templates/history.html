@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客户评级历史记录 - 客户准入系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shield-check me-2"></i>客户准入系统
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="bi bi-plus-circle me-1"></i>新建评级
+                </a>
+                <a class="nav-link active" href="/history">
+                    <i class="bi bi-clock-history me-1"></i>历史记录
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面头部 -->
+    <div class="header-container">
+        <div class="container">
+            <div class="text-center">
+                <h1><i class="bi bi-clock-history me-3"></i>历史记录管理</h1>
+                <p class="lead mb-0">查看和管理所有客户评级历史记录</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container main-container">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-table me-2"></i>客户评级历史记录
+                                </h5>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="refreshHistory()">
+                                        <i class="bi bi-arrow-clockwise me-1"></i>刷新
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-sm" onclick="exportSelectedRecords()" id="exportSelectedBtn" disabled>
+                                        <i class="bi bi-download me-1"></i>导出选中 (<span id="selectedCount">0</span>)
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-sm" onclick="exportAllRecords()" id="exportAllBtn" disabled>
+                                        <i class="bi bi-file-earmark-excel me-1"></i>导出全部
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- 统计信息面板 -->
+                        <div id="statsSection" class="stats-panel mb-4">
+                            <div class="stats-header">
+                                <h5 class="stats-title">
+                                    <i class="bi bi-graph-up me-2"></i>客户评级统计概览
+                                </h5>
+                                <p class="stats-subtitle">实时统计所有客户评级分布情况</p>
+                            </div>
+                            
+                            <div class="stats-grid">
+                                <div class="stat-card total-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-people-fill"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number" id="totalCount">0</div>
+                                        <div class="stat-label">总评级数</div>
+                                        <div class="stat-description">累计评估客户数量</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-card aplus-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-star-fill"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number" id="aplusCount">0</div>
+                                        <div class="stat-label">A+ 级客户</div>
+                                        <div class="stat-description">优秀客户（≥90分）</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-card a-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-award-fill"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number" id="aCount">0</div>
+                                        <div class="stat-label">A 级客户</div>
+                                        <div class="stat-description">良好客户（80-89分）</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-card bc-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number" id="bcCount">0</div>
+                                        <div class="stat-label">B/C 级客户</div>
+                                        <div class="stat-description">一般/风险客户（<80分）</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 加载提示 -->
+                        <div id="loadingIndicator" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p class="mt-2 text-muted">正在加载历史记录...</p>
+                        </div>
+
+                        <!-- 历史记录表格 -->
+                        <div id="historyTable" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th>
+                                                <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll()">
+                                            </th>
+                                            <th>序号</th>
+                                            <th>客户名称</th>
+                                            <th>客户类型</th>
+                                            <th>综合得分</th>
+                                            <th>客户等级</th>
+                                            <th>评估时间</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- 分页控件 -->
+                            <nav aria-label="分页导航" id="paginationNav" style="display: none;">
+                                <ul class="pagination justify-content-center" id="pagination">
+                                </ul>
+                            </nav>
+                        </div>
+
+                        <!-- 无记录提示 -->
+                        <div id="noRecords" style="display: none;" class="text-center py-5">
+                            <i class="bi bi-inbox display-1 text-muted"></i>
+                            <h5 class="text-muted mt-3">暂无评级记录</h5>
+                            <p class="text-muted">点击 <a href="/" class="text-decoration-none">这里</a> 创建您的第一个客户评级</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情模态框 -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="detailModalLabel">
+                        <i class="bi bi-info-circle me-2"></i>客户评级详细报告
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <div id="detailContent">
+                        <!-- 详情内容将在这里动态加载 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>关闭
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="exportCurrentRecord()">
+                        <i class="bi bi-download me-1"></i>导出Excel报告
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="bi bi-exclamation-triangle me-2"></i>确认删除
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <p>您确定要删除这个客户评级记录吗？</p>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        此操作不可撤销，请谨慎操作！
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                        <i class="bi bi-trash me-1"></i>确认删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 通知 -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toastNotification" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-info-circle text-primary me-2"></i>
+                <strong class="me-auto">系统通知</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="关闭"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                <!-- 消息内容 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/history.js') }}"></script>
+</body>
+</html> 

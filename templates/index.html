@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客户准入系统 - 客户评级</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shield-check me-2"></i>客户准入系统
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link active" href="/">
+                    <i class="bi bi-plus-circle me-1"></i>新建评级
+                </a>
+                <a class="nav-link" href="/history">
+                    <i class="bi bi-clock-history me-1"></i>历史记录
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面头部 -->
+    <div class="header-container">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h1><i class="bi bi-bar-chart-line me-3"></i>售前项目客户评级系统</h1>
+                <p class="lead mb-0">基于风险把控的客户准入与资信评估平台</p>
+            </div>
+            
+            <!-- 评级标准展示 -->
+            <div class="row justify-content-center mt-4 mb-4">
+                <div class="col-lg-10">
+                    <div class="rating-standards-card">
+                        <h5 class="text-center mb-3 fw-bold">评级标准</h5>
+                        <div class="row g-3">
+                            <div class="col-6 col-md-3">
+                                <div class="standard-item">
+                                    <span class="level-badge a-plus-bg">A+</span>
+                                    <div class="standard-text">
+                                        <div class="fw-bold">优秀客户</div>
+                                        <small>评分 ≥ 90分</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="standard-item">
+                                    <span class="level-badge a-bg">A</span>
+                                    <div class="standard-text">
+                                        <div class="fw-bold">良好客户</div>
+                                        <small>80-89分</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="standard-item">
+                                    <span class="level-badge b-bg">B</span>
+                                    <div class="standard-text">
+                                        <div class="fw-bold">一般客户</div>
+                                        <small>70-79分</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="standard-item">
+                                    <span class="level-badge c-bg">C</span>
+                                    <div class="standard-text">
+                                        <div class="fw-bold">风险客户</div>
+                                        <small>评分 < 70分</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 快捷操作按钮 -->
+            <div class="text-center">
+                <div class="btn-group btn-group-lg" role="group">
+                    <a href="/history" class="btn btn-outline-light btn-action">
+                        <i class="bi bi-clock-history me-2"></i>查看历史记录
+                    </a>
+                    <a href="/history" class="btn btn-success btn-action">
+                        <i class="bi bi-download me-2"></i>导出报告
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container main-container">
+        <div class="row g-4">
+            <!-- 评分表单 -->
+            <div class="col-lg-7">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-pencil-square me-2"></i> 客户评分表单
+                    </div>
+                    <div class="card-body">
+                        <form id="ratingForm">
+                            <!-- 客户基本信息 -->
+                            <div class="row mb-4">
+                                <div class="col-md-6 mb-3">
+                                    <label for="customerName" class="form-label">
+                                        <i class="bi bi-buildings me-2"></i> 客户名称
+                                    </label>
+                                    <input type="text" class="form-control" id="customerName" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="customerType" class="form-label">
+                                        <i class="bi bi-people me-2"></i> 客户类型
+                                    </label>
+                                    <select class="form-select" id="customerType" required>
+                                        <option value="">-- 请选择客户类型 --</option>
+                                        <option value="direct">直接客户</option>
+                                        <option value="global">Global同行客户</option>
+                                        <option value="overseas">海外代理客户</option>
+                                        <option value="peer">同行客户</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- 行业评分 -->
+                            <div class="mb-4">
+                                <h5 class="section-title">
+                                    <i class="bi bi-building me-2"></i> 1. 行业（权重10%）
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="industry" value="10" id="strategic">
+                                                <label class="form-check-label" for="strategic">
+                                                    战略行业 <span class="weight-tag">10分</span>
+                                                    <p class="option-desc">电子科技/半导体/汽车及配件/电池储能/电商</p>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="industry" value="5" id="nonStrategic">
+                                                <label class="form-check-label" for="nonStrategic">
+                                                    非战略行业 <span class="weight-tag">5分</span>
+                                                    <p class="option-desc">除战略行业之外的其他行业</p>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 业务类型 -->
+                            <div class="mb-4">
+                                <h5 class="section-title">
+                                    <i class="bi bi-diagram-3 me-2"></i> 2. 业务类型（权重15%）
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="businessType" value="15" id="combined">
+                                                <label class="form-check-label" for="combined">
+                                                    组合型业务 <span class="weight-tag">15分</span>
+                                                    <p class="option-desc">多类型物流业务组合</p>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="businessType" value="12" id="single">
+                                                <label class="form-check-label" for="single">
+                                                    非组合型业务 <span class="weight-tag">12分</span>
+                                                    <p class="option-desc">单一物流或相关业务</p>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 客户影响力 -->
+                            <div class="mb-4">
+                                <h5 class="section-title">
+                                    <i class="bi bi-star me-2"></i> 3. 客户影响力（权重10%）
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="influence" value="10" id="influence1">
+                                                <label class="form-check-label" for="influence1">
+                                                    世界500强/中国500强/上市公司/国企央企 <span class="weight-tag">10分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="influence" value="8" id="influence2">
+                                                <label class="form-check-label" for="influence2">
+                                                    民企500强 <span class="weight-tag">8分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="influence" value="4" id="influence3">
+                                                <label class="form-check-label" for="influence3">
+                                                    其他 <span class="weight-tag">4分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 物流费规模 -->
+                            <div class="mb-4">
+                                <h5 class="section-title">
+                                    <i class="bi bi-graph-up me-2"></i> 4. 客户物流费规模（权重10%）
+                                </h5>
+                                <div class="row">
+                                    <div class="col-6 col-md-3">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="logisticsScale" value="10" id="scale1">
+                                                <label class="form-check-label" for="scale1">
+                                                    ≥1亿 <span class="weight-tag">10分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="logisticsScale" value="8" id="scale2">
+                                                <label class="form-check-label" for="scale2">
+                                                    5000万-1亿 <span class="weight-tag">8分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="logisticsScale" value="6" id="scale3">
+                                                <label class="form-check-label" for="scale3">
+                                                    1000万-5000万 <span class="weight-tag">6分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="logisticsScale" value="4" id="scale4">
+                                                <label class="form-check-label" for="scale4">
+                                                    <1000万 <span class="weight-tag">4分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 资信评分 -->
+                            <div class="mb-4">
+                                <h5 class="section-title">
+                                    <i class="bi bi-shield me-2"></i> 5. 客户资信评分（权重25%）
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="creditScore" value="25" id="credit1">
+                                                <label class="form-check-label" for="credit1">
+                                                    优秀（90-100） <span class="weight-tag">25分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="creditScore" value="20" id="credit2">
+                                                <label class="form-check-label" for="credit2">
+                                                    良好（80-89） <span class="weight-tag">20分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="creditScore" value="15" id="credit3">
+                                                <label class="form-check-label" for="credit3">
+                                                    一般（65-79） <span class="weight-tag">15分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="creditScore" value="5" id="credit4">
+                                                <label class="form-check-label" for="credit4">
+                                                    较差（<65） <span class="weight-tag">5分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 商机预估 -->
+                            <div class="mb-4">
+                                <h5 class="section-title">
+                                    <i class="bi bi-cash-coin me-2"></i> 6. 商机预估（权重20%）
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-2 col-6">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="profitEstimate" value="20" id="profit1">
+                                                <label class="form-check-label" for="profit1">
+                                                    ≥1亿营收或≥500万毛利 <span class="weight-tag">20分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 col-6">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="profitEstimate" value="10" id="profit2">
+                                                <label class="form-check-label" for="profit2">
+                                                    ≥100万毛利 <span class="weight-tag">10分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 col-6">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="profitEstimate" value="5" id="profit3">
+                                                <label class="form-check-label" for="profit3">
+                                                    ≥60万毛利 <span class="weight-tag">5分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 col-6">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="profitEstimate" value="2" id="profit4">
+                                                <label class="form-check-label" for="profit4">
+                                                    ≥12万毛利 <span class="weight-tag">2分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 col-6">
+                                        <div class="rating-option">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="profitEstimate" value="0" id="profit5">
+                                                <label class="form-check-label" for="profit5">
+                                                    <12万毛利 <span class="weight-tag">0分</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 操作按钮 -->
+                            <div class="form-actions mt-5">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <button type="reset" class="btn btn-secondary btn-lg w-100">
+                                            <i class="bi bi-arrow-clockwise me-2"></i>重置表单
+                                        </button>
+                                    </div>
+                                    <div class="col-6">
+                                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                                            <i class="bi bi-calculator me-2"></i>计算评级
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 评分结果 -->
+            <div class="col-lg-5">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="bi bi-graph-up me-2"></i> 评分结果
+                    </div>
+                    <div class="card-body">
+                        <div id="resultSection" class="d-none">
+                            <div class="text-center mb-4">
+                                <h3 class="result-title">客户综合评分结果</h3>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="fw-bold">客户名称：</span>
+                                <span id="resultCustomerName" class="fw-bold"></span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mb-4 pb-3 border-bottom">
+                                <span class="fw-bold">客户类型：</span>
+                                <span id="resultCustomerType" class="fw-bold"></span>
+                            </div>
+                            
+                            <div class="text-center mb-4">
+                                <div class="total-score" id="totalScore">0</div>
+                                <div class="mt-2">
+                                    <span class="fs-4 fw-bold me-3">客户等级：</span>
+                                    <span class="level-badge" id="resultGrade">-</span>
+                                </div>
+                            </div>
+                            
+                            <div class="alert" id="resultMessage">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <span id="resultMessageText">评级结果将显示在这里...</span>
+                            </div>
+                        </div>
+                        
+                        <div id="emptyResult" class="d-flex flex-column justify-content-center align-items-center py-5">
+                            <i class="bi bi-clipboard-data display-1 text-muted mb-3"></i>
+                            <h5 class="text-muted">请填写评分表单</h5>
+                            <p class="text-muted">完成所有必填项后点击"计算评级"按钮</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html> 
