@@ -3,7 +3,259 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化
     initRatingOptions();
     initForm();
+    initCompanyAutocomplete();
+    
+    // 初始化企业名称显示
+    updateCurrentCompanyName();
 });
+
+// 企业名称自动补全
+let autocompleteTimeout;
+let currentSuggestionIndex = -1;
+let autocompleteVisible = false;
+
+function initCompanyAutocomplete() {
+    const customerNameInput = document.getElementById('customerName');
+    const autocompleteContainer = document.getElementById('companyAutocomplete');
+    
+    if (!customerNameInput || !autocompleteContainer) return;
+    
+    // 输入事件
+    customerNameInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        
+        // 清除之前的超时
+        if (autocompleteTimeout) {
+            clearTimeout(autocompleteTimeout);
+        }
+        
+        // 延迟搜索，避免频繁请求
+        autocompleteTimeout = setTimeout(() => {
+            if (query.length >= 2) {
+                searchCompanies(query);
+            } else if (query.length === 0) {
+                showPopularCompanies();
+            } else {
+                hideAutocomplete();
+            }
+        }, 300);
+    });
+    
+    // 焦点事件
+    customerNameInput.addEventListener('focus', function() {
+        const query = this.value.trim();
+        if (query.length >= 2) {
+            searchCompanies(query);
+        } else if (query.length === 0) {
+            showPopularCompanies();
+        }
+    });
+    
+    // 失去焦点事件
+    customerNameInput.addEventListener('blur', function() {
+        // 延迟隐藏，确保点击建议项有效
+        setTimeout(() => {
+            hideAutocomplete();
+        }, 200);
+    });
+    
+    // 键盘导航
+    customerNameInput.addEventListener('keydown', function(e) {
+        if (!autocompleteVisible) return;
+        
+        const suggestions = autocompleteContainer.querySelectorAll('.autocomplete-suggestion');
+        
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                currentSuggestionIndex = Math.min(currentSuggestionIndex + 1, suggestions.length - 1);
+                updateSuggestionSelection(suggestions);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                currentSuggestionIndex = Math.max(currentSuggestionIndex - 1, -1);
+                updateSuggestionSelection(suggestions);
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (currentSuggestionIndex >= 0 && suggestions[currentSuggestionIndex]) {
+                    selectSuggestion(suggestions[currentSuggestionIndex]);
+                }
+                break;
+            case 'Escape':
+                hideAutocomplete();
+                break;
+        }
+    });
+    
+    // 点击外部区域隐藏建议
+    document.addEventListener('click', function(e) {
+        if (!customerNameInput.contains(e.target) && !autocompleteContainer.contains(e.target)) {
+            hideAutocomplete();
+        }
+    });
+}
+
+async function searchCompanies(query) {
+    try {
+        showAutocompleteLoading();
+        
+        const response = await fetch(`/api/company-autocomplete?q=${encodeURIComponent(query)}&limit=8`);
+        const result = await response.json();
+        
+        if (result.success && result.data.suggestions.length > 0) {
+            showSuggestions(result.data.suggestions, query);
+        } else {
+            showNoResults(query);
+        }
+    } catch (error) {
+        console.error('搜索企业名称失败:', error);
+        showAutocompleteError();
+    }
+}
+
+async function showPopularCompanies() {
+    try {
+        const response = await fetch('/api/company-autocomplete?limit=8');
+        const result = await response.json();
+        
+        if (result.success && result.data.suggestions.length > 0) {
+            showSuggestions(result.data.suggestions, '', true);
+        }
+    } catch (error) {
+        console.error('获取热门企业失败:', error);
+    }
+}
+
+function showSuggestions(suggestions, query, isPopular = false) {
+    const autocompleteContainer = document.getElementById('companyAutocomplete');
+    
+    let html = '';
+    
+    if (isPopular) {
+        html += '<div class="autocomplete-hint"><i class="bi bi-star me-1"></i> 热门企业推荐</div>';
+    }
+    
+    suggestions.forEach((suggestion, index) => {
+        const matchTypeText = getMatchTypeText(suggestion.type);
+        const matchTypeClass = suggestion.type;
+        
+        html += `
+            <div class="autocomplete-suggestion" data-index="${index}" data-company="${suggestion.name}">
+                <span class="company-name">${highlightMatch(suggestion.name, query)}</span>
+                <span class="match-type ${matchTypeClass}">${matchTypeText}</span>
+            </div>
+        `;
+    });
+    
+    autocompleteContainer.innerHTML = html;
+    autocompleteContainer.style.display = 'block';
+    autocompleteVisible = true;
+    currentSuggestionIndex = -1;
+    
+    // 绑定点击事件
+    autocompleteContainer.querySelectorAll('.autocomplete-suggestion').forEach(item => {
+        item.addEventListener('click', function() {
+            selectSuggestion(this);
+        });
+    });
+}
+
+function showAutocompleteLoading() {
+    const autocompleteContainer = document.getElementById('companyAutocomplete');
+    autocompleteContainer.innerHTML = `
+        <div class="autocomplete-loading">
+            <i class="bi bi-search me-2"></i>正在搜索...
+        </div>
+    `;
+    autocompleteContainer.style.display = 'block';
+    autocompleteVisible = true;
+}
+
+function showNoResults(query) {
+    const autocompleteContainer = document.getElementById('companyAutocomplete');
+    autocompleteContainer.innerHTML = `
+        <div class="autocomplete-empty">
+            <i class="bi bi-exclamation-circle me-2"></i>未找到包含 "${query}" 的企业
+        </div>
+    `;
+    autocompleteContainer.style.display = 'block';
+    autocompleteVisible = true;
+}
+
+function showAutocompleteError() {
+    const autocompleteContainer = document.getElementById('companyAutocomplete');
+    autocompleteContainer.innerHTML = `
+        <div class="autocomplete-empty">
+            <i class="bi bi-exclamation-triangle me-2"></i>搜索失败，请重试
+        </div>
+    `;
+    autocompleteContainer.style.display = 'block';
+    autocompleteVisible = true;
+}
+
+function hideAutocomplete() {
+    const autocompleteContainer = document.getElementById('companyAutocomplete');
+    autocompleteContainer.style.display = 'none';
+    autocompleteVisible = false;
+    currentSuggestionIndex = -1;
+}
+
+function updateSuggestionSelection(suggestions) {
+    suggestions.forEach((item, index) => {
+        if (index === currentSuggestionIndex) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+}
+
+function selectSuggestion(suggestionElement) {
+    const companyName = suggestionElement.getAttribute('data-company');
+    const customerNameInput = document.getElementById('customerName');
+    
+    customerNameInput.value = companyName;
+    hideAutocomplete();
+    
+    // 触发输入事件，以便其他组件知道值已改变
+    customerNameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    
+    // 添加到自定义数据库（如果不存在）
+    addCompanyToDatabase(companyName);
+}
+
+function highlightMatch(text, query) {
+    if (!query) return text;
+    
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<strong>$1</strong>');
+}
+
+function getMatchTypeText(type) {
+    const types = {
+        'exact': '精确',
+        'keyword': '关键词',
+        'fuzzy': '模糊',
+        'popular': '热门'
+    };
+    return types[type] || type;
+}
+
+async function addCompanyToDatabase(companyName) {
+    try {
+        await fetch('/api/company-suggestions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ company_name: companyName })
+        });
+    } catch (error) {
+        // 静默处理错误，不影响用户体验
+        console.log('添加企业到数据库失败:', error);
+    }
+}
 
 // 初始化评分选项点击事件
 function initRatingOptions() {
@@ -28,9 +280,25 @@ function initRatingOptions() {
     });
 }
 
+// 更新资信评分表中显示的企业名称
+function updateCurrentCompanyName() {
+    const customerNameInput = document.getElementById('customerName');
+    const currentCompanyNameSpan = document.getElementById('currentCompanyName');
+    
+    if (customerNameInput && currentCompanyNameSpan) {
+        const companyName = customerNameInput.value.trim();
+        if (companyName) {
+            currentCompanyNameSpan.textContent = companyName;
+        } else {
+            currentCompanyNameSpan.textContent = '请先在主页面输入客户名称';
+        }
+    }
+}
+
 // 初始化表单事件
 function initForm() {
     const form = document.getElementById('ratingForm');
+    const customerNameInput = document.getElementById('customerName');
     
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -46,8 +314,24 @@ function initForm() {
             
             // 隐藏结果，显示空状态
             showEmptyResult();
+            
+            // 更新企业名称显示
+            updateCurrentCompanyName();
         }, 100);
     });
+    
+    // 监听客户名称输入框变化
+    if (customerNameInput) {
+        customerNameInput.addEventListener('input', updateCurrentCompanyName);
+    }
+    
+    // 监听资信评分模态框打开事件
+    const creditRatingModal = document.getElementById('creditRatingModal');
+    if (creditRatingModal) {
+        creditRatingModal.addEventListener('show.bs.modal', function() {
+            updateCurrentCompanyName();
+        });
+    }
 }
 
 // 计算评级
@@ -367,12 +651,19 @@ function validateCreditScore() {
 
 // 自动获取企业信息功能
 async function autoFillCompanyInfo() {
-    const companyNameInput = document.getElementById('autoFillCompanyName');
-    const companyName = companyNameInput.value.trim();
+    // 从主页面的客户名称输入框获取企业名称
+    const mainCompanyNameInput = document.getElementById('customerName');
+    const companyName = mainCompanyNameInput.value.trim();
     
     if (!companyName) {
-        alert('请输入企业名称');
-        companyNameInput.focus();
+        alert('请先在主页面输入客户名称');
+        // 关闭资信评分模态框，让用户回到主页面输入
+        const modalElement = document.getElementById('creditRatingModal');
+        let modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        }
+        mainCompanyNameInput.focus();
         return;
     }
     

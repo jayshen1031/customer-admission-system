@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业名称自动补全测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #result { margin-top: 20px; background: #f0f0f0; padding: 10px; }
+        button { margin: 5px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>企业名称自动补全API测试</h1>
+    
+    <div>
+        <button onclick="testSearch('阿里')">测试搜索：阿里</button>
+        <button onclick="testSearch('腾讯')">测试搜索：腾讯</button>
+        <button onclick="testSearch('小米')">测试搜索：小米</button>
+        <button onclick="testPopular()">测试热门企业</button>
+    </div>
+    
+    <div id="result"></div>
+    
+    <script>
+        async function testSearch(query) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<p>搜索中: "${query}"...</p>`;
+            
+            try {
+                const response = await fetch(`/api/company-autocomplete?q=${encodeURIComponent(query)}&limit=5`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = `<h3>搜索结果 (${data.data.total} 个)：</h3>`;
+                    if (data.data.suggestions.length > 0) {
+                        html += '<ul>';
+                        data.data.suggestions.forEach(item => {
+                            html += `<li>${item.name} <span style="color: blue;">(${item.type}, 分数: ${item.score || 'N/A'})</span></li>`;
+                        });
+                        html += '</ul>';
+                    } else {
+                        html += '<p>无结果</p>';
+                    }
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">错误: ${data.error}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">请求失败: ${error.message}</p>`;
+            }
+        }
+        
+        async function testPopular() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>获取热门企业...</p>';
+            
+            try {
+                const response = await fetch('/api/company-autocomplete?limit=8');
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = `<h3>热门企业 (${data.data.total} 个)：</h3>`;
+                    if (data.data.suggestions.length > 0) {
+                        html += '<ul>';
+                        data.data.suggestions.forEach(item => {
+                            html += `<li>${item.name} <span style="color: green;">(${item.type})</span></li>`;
+                        });
+                        html += '</ul>';
+                    } else {
+                        html += '<p>无结果</p>';
+                    }
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">错误: ${data.error}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">请求失败: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html> 

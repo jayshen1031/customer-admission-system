@@ -1013,4 +1013,138 @@ body {
 .credit-score-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 企业名称自动补全样式 */
+.autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-top: none;
+    border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm);
+    box-shadow: var(--card-shadow);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.autocomplete-suggestion {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-100);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.autocomplete-suggestion:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-suggestion:hover {
+    background: var(--gray-50);
+    transform: translateX(4px);
+}
+
+.autocomplete-suggestion.active {
+    background: var(--primary-color);
+    color: white;
+    transform: translateX(4px);
+}
+
+.autocomplete-suggestion .company-name {
+    font-weight: 500;
+    color: var(--gray-800);
+    flex: 1;
+}
+
+.autocomplete-suggestion.active .company-name {
+    color: white;
+}
+
+.autocomplete-suggestion .match-type {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--gray-200);
+    color: var(--gray-600);
+    margin-left: 8px;
+}
+
+.autocomplete-suggestion.active .match-type {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.autocomplete-suggestion .match-type.exact {
+    background: var(--success-color);
+    color: white;
+}
+
+.autocomplete-suggestion .match-type.keyword {
+    background: var(--warning-color);
+    color: white;
+}
+
+.autocomplete-suggestion .match-type.fuzzy {
+    background: var(--gray-400);
+    color: white;
+}
+
+.autocomplete-suggestion .match-type.popular {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.autocomplete-loading {
+    padding: 16px;
+    text-align: center;
+    color: var(--gray-500);
+    font-size: 0.9rem;
+}
+
+.autocomplete-empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--gray-500);
+    font-size: 0.9rem;
+}
+
+.autocomplete-hint {
+    padding: 12px 16px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    text-align: center;
+}
+
+/* 输入框样式增强 */
+#customerName {
+    position: relative;
+}
+
+#customerName:focus + .autocomplete-suggestions {
+    border-color: var(--primary-color);
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+    .autocomplete-suggestions {
+        max-height: 200px;
+    }
+    
+    .autocomplete-suggestion {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .autocomplete-suggestion .match-type {
+        font-size: 0.7rem;
+        padding: 1px 6px;
+    }
 } 

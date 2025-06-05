@@ -6,6 +6,7 @@ import os
 import xlsxwriter
 import io
 from external_data_service import ExternalDataService
+from company_autocomplete_service import autocomplete_service
 
 app = Flask(__name__)
 
@@ -63,6 +64,11 @@ external_service = ExternalDataService()
 def index():
     """主页面"""
     return render_template('index.html')
+
+@app.route('/test-autocomplete')
+def test_autocomplete():
+    """自动补全测试页面"""
+    return send_file('test_autocomplete.html')
 
 @app.route('/api/calculate', methods=['POST'])
 def calculate_rating():
@@ -813,6 +819,84 @@ def test_external_api():
             'status': 'error',
             'message': f'测试失败: {str(e)}'
         })
+
+
+@app.route('/api/company-autocomplete', methods=['GET'])
+def company_autocomplete():
+    """企业名称自动补全接口"""
+    try:
+        query = request.args.get('q', '').strip()
+        limit = request.args.get('limit', 8, type=int)
+        
+        if not query:
+            # 如果没有查询参数，返回热门企业推荐
+            suggestions = autocomplete_service.get_popular_companies(limit)
+            return jsonify({
+                'success': True,
+                'data': {
+                    'suggestions': [{'name': name, 'type': 'popular'} for name in suggestions],
+                    'query': query,
+                    'total': len(suggestions)
+                }
+            })
+        
+        # 执行搜索
+        results = autocomplete_service.search_companies(query, limit)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'suggestions': [
+                    {
+                        'name': result['name'],
+                        'type': result['match_type'],
+                        'score': result['score']
+                    } for result in results
+                ],
+                'query': query,
+                'total': len(results)
+            }
+        })
+        
+        # 将用户输入的企业名称添加到数据库（当实际使用时）
+        if len(results) == 0 and len(query) > 2:
+            # 可以在这里记录未找到的企业名称，后续可能需要人工添加到数据库
+            pass
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/company-suggestions', methods=['POST'])
+def add_company_suggestion():
+    """添加企业名称到建议数据库"""
+    try:
+        data = request.json
+        company_name = data.get('company_name', '').strip()
+        
+        if not company_name:
+            return jsonify({
+                'success': False,
+                'error': '企业名称不能为空'
+            }), 400
+        
+        # 添加到自动补全数据库
+        autocomplete_service.add_company(company_name)
+        
+        return jsonify({
+            'success': True,
+            'message': f'企业名称 "{company_name}" 已添加到建议数据库'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True) 
