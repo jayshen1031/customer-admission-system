@@ -11,9 +11,28 @@ from company_autocomplete_service import autocomplete_service
 app = Flask(__name__)
 
 # 数据库配置
+# MySQL数据库配置 - 请根据实际情况修改数据库连接信息
+DB_HOST = os.environ.get('DB_HOST', 'localhost')
+DB_PORT = os.environ.get('DB_PORT', '3306')
+DB_NAME = os.environ.get('DB_NAME', 'customer_rating_system')
+DB_USER = os.environ.get('DB_USER', 'root')
+DB_PASSWORD = os.environ.get('DB_PASSWORD', 'password')
+
+# MySQL连接字符串
+mysql_uri = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4'
+
+# SQLite备用配置（用于开发环境）
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "customer_rating.db")}'
+sqlite_uri = f'sqlite:///{os.path.join(basedir, "customer_rating.db")}'
+
+# 优先使用MySQL，如果连接失败则使用SQLite
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', mysql_uri)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+    'connect_args': {"charset": "utf8mb4"}
+}
 app.config['SECRET_KEY'] = 'customer-rating-system-2024'
 
 db = SQLAlchemy(app)
@@ -55,7 +74,17 @@ class CustomerRating(db.Model):
 
 # 创建数据库表
 with app.app_context():
-    db.create_all()
+    try:
+        # 尝试连接数据库并创建表
+        db.create_all()
+        print(f"✅ 数据库连接成功: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    except Exception as e:
+        print(f"❌ 数据库连接失败: {e}")
+        print("🔄 尝试使用SQLite备用数据库...")
+        # 如果MySQL连接失败，切换到SQLite
+        app.config['SQLALCHEMY_DATABASE_URI'] = sqlite_uri
+        db.create_all()
+        print(f"✅ SQLite数据库已启用: {sqlite_uri}")
 
 # 初始化外部数据服务
 external_service = ExternalDataService()

@@ -35,7 +35,8 @@
 
 ### 后端技术栈
 - **框架**：Flask 2.3.3 - 轻量级Web框架
-- **数据库**：SQLAlchemy + SQLite - 轻量级数据持久化
+- **数据库**：SQLAlchemy + MySQL/SQLite - 支持MySQL生产环境和SQLite开发环境
+- **MySQL驱动**：PyMySQL 1.1.1 - 纯Python MySQL驱动
 - **报告生成**：XlsxWriter 3.1.9 - 专业Excel报告
 - **API设计**：RESTful API - 标准化接口
 
@@ -70,6 +71,7 @@ CustomerRating {
 ### 环境要求
 - Python 3.8+
 - pip 包管理器
+- MySQL 5.7+ (生产环境推荐) 或 SQLite (开发环境)
 
 ### 安装步骤
 
@@ -84,7 +86,30 @@ cd 客户准入系统
 pip install -r requirements.txt
 ```
 
-3. **启动系统**
+3. **配置数据库（可选）**
+
+**MySQL配置（生产环境推荐）：**
+```bash
+# 设置环境变量
+export DB_HOST=localhost
+export DB_PORT=3306
+export DB_NAME=customer_rating_system
+export DB_USER=root
+export DB_PASSWORD=your_password
+
+# 或设置完整数据库URL
+export DATABASE_URL=mysql+pymysql://username:password@localhost:3306/customer_rating_system?charset=utf8mb4
+```
+
+**创建MySQL数据库：**
+```sql
+CREATE DATABASE customer_rating_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+**SQLite配置（默认）：**
+如果未配置MySQL，系统会自动使用SQLite数据库，无需额外配置。
+
+4. **启动系统**
 ```bash
 python app.py
 ```
