@@ -173,6 +173,7 @@ function updateStatistics(data) {
     document.getElementById('aplusCount').textContent = data.aplus_count || 0;
     document.getElementById('aCount').textContent = data.a_count || 0;
     document.getElementById('bcCount').textContent = (data.b_count || 0) + (data.c_count || 0);
+    document.getElementById('dCount').textContent = data.d_count || 0;
     
     // 更新时间范围描述
     const timeRangeInfo = document.getElementById('timeRangeInfo');
@@ -478,7 +479,7 @@ function renderDetailModal(rating) {
     content.innerHTML = `
         <!-- 报告标题 -->
         <div class="text-center mb-4">
-            <h3 class="fw-bold text-primary">售前项目客户评级报告</h3>
+            <h3 class="fw-bold text-primary">客户售前等级评分报告</h3>
             <p class="text-muted">Customer Rating Report</p>
         </div>
         
@@ -589,21 +590,21 @@ function renderDetailModal(rating) {
                         <div class="text-center p-3 border rounded">
                             <div class="badge bg-primary fs-6 px-3 py-2 mb-2">A 级</div>
                             <div class="text-muted">80-89 分</div>
-                            <small class="text-primary">良好客户，可以合作</small>
+                            <small class="text-primary">80-89分</small>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="text-center p-3 border rounded">
                             <div class="badge bg-warning fs-6 px-3 py-2 mb-2">B 级</div>
                             <div class="text-muted">70-79 分</div>
-                            <small class="text-warning">一般客户，谨慎合作</small>
+                            <small class="text-warning">70-79分</small>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="text-center p-3 border rounded">
                             <div class="badge bg-danger fs-6 px-3 py-2 mb-2">C 级</div>
                             <div class="text-muted">< 70 分</div>
-                            <small class="text-danger">风险客户，不建议合作</small>
+                            <small class="text-danger">60-69分</small>
                         </div>
                     </div>
                 </div>
@@ -841,10 +842,17 @@ async function exportAllRecords() {
     }
 }
 
-// 删除评级记录
+// 删除评级记录（标记删除）
 async function deleteRating(ratingId) {
     try {
         currentRatingForAction = { id: ratingId };
+        
+        // 清空删除原因输入框
+        const deleteReasonInput = document.getElementById('deleteReason');
+        if (deleteReasonInput) {
+            deleteReasonInput.value = '';
+        }
+        
         await showModal('deleteModal');
     } catch (error) {
         console.error('Error showing delete modal:', error);
@@ -852,19 +860,34 @@ async function deleteRating(ratingId) {
     }
 }
 
-// 确认删除
+// 确认删除（软删除，标记为删除状态）
 async function confirmDelete() {
     try {
         if (!currentRatingForAction) return;
         
+        // 获取删除原因
+        const deleteReasonInput = document.getElementById('deleteReason');
+        const deleteReason = deleteReasonInput ? deleteReasonInput.value.trim() : '';
+        
+        if (!deleteReason) {
+            showToast('请输入删除原因', 'warning');
+            return;
+        }
+        
         const response = await fetch(`/api/rating/${currentRatingForAction.id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                reason: deleteReason
+            })
         });
         
         const result = await response.json();
         
         if (result.success) {
-            showToast('删除成功！', 'success');
+            showToast(result.message || '记录已标记删除，等待管理员审批', 'success');
             
             // 从选中列表中移除
             selectedRatings.delete(currentRatingForAction.id);
@@ -891,16 +914,18 @@ function getGradeBadgeClass(grade) {
         case 'A': return 'primary';
         case 'B': return 'warning';
         case 'C': return 'danger';
+        case 'D': return 'dark';
         default: return 'secondary';
     }
 }
 
 // 获取分数颜色
 function getScoreColor(score) {
-    if (score >= 90) return 'success';
+    if (score > 90) return 'success';
     if (score >= 80) return 'primary';
     if (score >= 70) return 'warning';
-    return 'danger';
+    if (score >= 60) return 'danger';
+    return 'dark';
 }
 
 // 获取提示框样式类
@@ -910,6 +935,7 @@ function getAlertClass(grade) {
         case 'A': return 'primary';
         case 'B': return 'warning';
         case 'C': return 'danger';
+        case 'D': return 'dark';
         default: return 'secondary';
     }
 }
@@ -927,15 +953,25 @@ function getCustomerTypeText(type) {
 
 // 获取评级结论
 function getRatingConclusion(rating) {
+    if (rating.customer_type === 'peer') {
+        if (rating.total_score >= 60) {
+            return '⚠️ 同行客户限制：根据规则，同行客户售前项目等级最高不超过C级';
+        } else {
+            return '❗ 同行客户评级为D级，不建议合作';
+        }
+    }
+    
     switch(rating.grade) {
         case 'A+':
             return '✅ 该客户评级为A+级，属于优质客户，推荐优先合作';
         case 'A':
-            return '✅ 该客户评级为A级，属于良好客户，可以合作';
+            return '📈 该客户评级为A级，建议加强合作';
         case 'B':
-            return '⚠️ 该客户评级为B级，属于一般客户，建议谨慎合作';
+            return '⚠️ 该客户评级为B级，有一定的风险，需要谨慎评估';
         case 'C':
-            return '❌ 该客户评级为C级，属于风险客户，不建议合作';
+            return '❗ 该客户评级为C级，需要领导审批';
+        case 'D':
+            return '❗ 该客户评级为D级，不建议合作';
         default:
             return '评级信息异常，请重新评估';
     }

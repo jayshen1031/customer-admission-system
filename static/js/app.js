@@ -177,6 +177,11 @@ function showNoResults(query) {
     autocompleteContainer.innerHTML = `
         <div class="autocomplete-empty">
             <i class="bi bi-exclamation-circle me-2"></i>未找到包含 "${query}" 的企业
+            <div class="intelligent-search-section mt-2">
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="showIntelligentSearch('${query}')">
+                    <i class="bi bi-magic me-1"></i>智能搜索相似企业
+                </button>
+            </div>
         </div>
     `;
     autocompleteContainer.style.display = 'block';
@@ -235,6 +240,7 @@ function highlightMatch(text, query) {
 function getMatchTypeText(type) {
     const types = {
         'exact': '精确',
+        'pinyin': '拼音',
         'keyword': '关键词',
         'fuzzy': '模糊',
         'popular': '热门'
@@ -431,7 +437,13 @@ function collectFormData() {
     
     const getSelectedText = (name) => {
         const selected = document.querySelector(`input[name="${name}"]:checked`);
-        return selected ? selected.closest('.form-check').querySelector('label').textContent.trim() : '';
+        if (!selected) return '';
+        
+        const formCheck = selected.closest('.form-check');
+        if (!formCheck) return '';
+        
+        const label = formCheck.querySelector('label');
+        return label ? label.textContent.trim() : '';
     };
     
     const customerType = document.getElementById('customerType');
@@ -526,7 +538,8 @@ function getGradeClass(grade) {
         case 'A': return 'a-bg';
         case 'B': return 'b-bg';
         case 'C': return 'c-bg';
-        default: return 'c-bg';
+        case 'D': return 'd-bg';
+        default: return 'd-bg';
     }
 }
 
@@ -768,6 +781,589 @@ function showAutoFillError(message) {
 function hideAutoFillMessages() {
     document.getElementById('autoFillResult').classList.add('d-none');
     document.getElementById('autoFillError').classList.add('d-none');
+}
+
+// ===== 智能搜索功能 =====
+
+let currentSearchQuery = '';
+let currentSearchPage = 1;
+
+async function showIntelligentSearch(query) {
+    try {
+        // 隐藏自动完成下拉框
+        hideAutocomplete();
+        
+        // 重置搜索状态
+        currentSearchQuery = query;
+        currentSearchPage = 1;
+        
+        // 显示智能搜索模态框
+        const modal = createIntelligentSearchModal(query);
+        document.body.appendChild(modal);
+        
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+        
+        // 模态框关闭时清理DOM
+        modal.addEventListener('hidden.bs.modal', function() {
+            modal.remove();
+        });
+        
+        // 执行智能搜索
+        await performIntelligentSearch(query, modal, 1);
+        
+    } catch (error) {
+        console.error('智能搜索失败:', error);
+        showAlert('智能搜索失败，请重试', 'error');
+    }
+}
+
+function createIntelligentSearchModal(query) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.setAttribute('tabindex', '-1');
+    modal.id = 'intelligentSearchModal';
+    
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-magic me-2"></i>智能搜索相似企业
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="search-info mb-3">
+                        <span class="text-muted">搜索关键词：</span>
+                        <span class="fw-bold">"${query}"</span>
+                    </div>
+                    <div id="intelligentSearchResults">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2">正在智能搜索相似企业...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="manualInputBtn" onclick="useManualInput('${query}')">
+                        <i class="bi bi-pencil me-1"></i>手动输入此名称
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return modal;
+}
+
+async function performIntelligentSearch(query, modal, page = 1) {
+    try {
+        const response = await fetch('/api/intelligent-search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query: query, page: page })
+        });
+        
+        const result = await response.json();
+        const resultsContainer = modal.querySelector('#intelligentSearchResults');
+        
+        if (result.success && result.data.supplement_triggered) {
+            // 触发了数据补充机制
+            showDataSupplementProgress(resultsContainer, result.data, modal);
+        } else if (result.success && result.data.results.length > 0) {
+            displayIntelligentSearchResults(result.data, resultsContainer, modal);
+        } else {
+            showNoIntelligentResults(resultsContainer, query, modal);
+        }
+        
+    } catch (error) {
+        console.error('智能搜索请求失败:', error);
+        const resultsContainer = modal.querySelector('#intelligentSearchResults');
+        showIntelligentSearchError(resultsContainer);
+    }
+}
+
+function displayIntelligentSearchResults(data, container, modal) {
+    const { results, page, has_more, total_found } = data;
+    
+    let html = `
+        <div class="alert alert-info intelligent-search-info">
+            <i class="bi bi-lightbulb me-2"></i>
+            找到 ${results.length} 个相似的企业（共${total_found}个），请选择最匹配的一个：
+        </div>
+        <div class="intelligent-results-list">
+    `;
+    
+    results.forEach((company, index) => {
+        // 处理分数：如果已经是百分比就直接使用，否则转换为百分比
+        const scorePercentage = company.score > 1 ? Math.round(company.score) : Math.round(company.score * 100);
+        const scoreClass = getScoreClass(company.score);
+        const externalDataBadge = company.has_external_data ? 
+            '<span class="badge bg-success ms-2"><i class="bi bi-database me-1"></i>有资信数据</span>' : 
+            '<span class="badge bg-secondary ms-2"><i class="bi bi-database me-1"></i>暂无资信数据</span>';
+        
+        html += `
+            <div class="intelligent-result-item" data-company="${company.name}" data-has-data="${company.has_external_data}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="company-name-large">${company.name}</div>
+                        <div class="company-details">
+                            <span class="company-description text-muted">${company.description}</span>
+                            <span class="match-info ms-2">
+                                <span class="badge bg-light text-dark">${getMatchTypeText(company.match_type)}</span>
+                            </span>
+                            ${externalDataBadge}
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="similarity-score ${scoreClass}">
+                            相似度 ${scorePercentage}%
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm mt-1" onclick="selectIntelligentResult('${company.name}', ${company.has_external_data}, '${modal.id}')">
+                            选择此企业
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    
+    // 如果还有更多结果，显示"再搜索5条"按钮
+    if (has_more) {
+        html += `
+            <div class="intelligent-search-pagination">
+                <p class="text-muted mb-2">没有找到满意的企业？</p>
+                <button type="button" class="btn btn-outline-primary me-2" onclick="loadMoreIntelligentResults('${modal.id}')">
+                    <i class="bi bi-search me-1"></i>再搜索5条
+                </button>
+                <button type="button" class="btn btn-outline-success me-2" onclick="triggerAdditionalSupplement('${modal.id}')">
+                    <i class="bi bi-plus-circle me-1"></i>继续补充相关企业
+                </button>
+            </div>
+        `;
+    } else {
+        // 即使没有更多分页结果，也提供继续补充选项
+        html += `
+            <div class="intelligent-search-pagination">
+                <p class="text-muted mb-2">没有找到满意的企业？</p>
+                <button type="button" class="btn btn-outline-success me-2" onclick="triggerAdditionalSupplement('${modal.id}')">
+                    <i class="bi bi-plus-circle me-1"></i>继续补充相关企业
+                </button>
+                <button type="button" class="btn btn-outline-info me-2" onclick="showRefineSearchInput('${modal.id}')">
+                    <i class="bi bi-pencil me-1"></i>精确搜索
+                </button>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+    currentSearchPage = page;
+}
+
+function showNoIntelligentResults(container, query, modal) {
+    container.innerHTML = `
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            很抱歉，没有找到与 "${query}" 相似的企业。
+        </div>
+        <div class="text-center py-3">
+            <p class="text-muted mb-3">建议：</p>
+            <ul class="list-unstyled text-start d-inline-block">
+                <li><i class="bi bi-check me-2"></i>检查企业名称是否正确</li>
+                <li><i class="bi bi-check me-2"></i>尝试使用企业简称</li>
+                <li><i class="bi bi-check me-2"></i>或点击"手动输入此名称"继续</li>
+            </ul>
+            <div class="mt-3">
+                <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>取消搜索
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function showIntelligentSearchError(container) {
+    container.innerHTML = `
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            智能搜索服务暂时不可用，请稍后重试。
+        </div>
+    `;
+}
+
+function showDataSupplementProgress(container, data, modal) {
+    const { query, estimated_time, message, suggestion } = data;
+    
+    container.innerHTML = `
+        <div class="alert alert-info data-supplement-alert">
+            <div class="d-flex align-items-center mb-3">
+                <div class="spinner-border spinner-border-sm text-primary me-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div>
+                    <h6 class="mb-1">
+                        <i class="bi bi-magic me-2"></i>智能数据补充中...
+                    </h6>
+                    <p class="mb-0 text-muted">${message}</p>
+                </div>
+            </div>
+            
+            <div class="progress mb-3" style="height: 8px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: 0%" id="supplementProgress">
+                </div>
+            </div>
+            
+            <div class="supplement-info">
+                <p class="text-muted mb-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    ${suggestion}
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        预计完成时间：<span id="remainingTime">${estimated_time}</span> 秒
+                    </small>
+                    <button type="button" class="btn btn-outline-primary btn-sm" 
+                            onclick="checkSupplementStatus('${query}', '${modal.id}')" 
+                            id="checkStatusBtn">
+                        <i class="bi bi-arrow-clockwise me-1"></i>检查进度
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-3">
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
+                <i class="bi bi-x-circle me-1"></i>取消等待
+            </button>
+            <button type="button" class="btn btn-primary" onclick="useManualInput('${query}')">
+                <i class="bi bi-pencil me-1"></i>直接手动输入
+            </button>
+        </div>
+    `;
+    
+    // 启动进度条动画和倒计时
+    startSupplementProgress(estimated_time, query, modal.id);
+}
+
+function startSupplementProgress(estimatedTime, query, modalId) {
+    const progressBar = document.getElementById('supplementProgress');
+    const remainingTimeSpan = document.getElementById('remainingTime');
+    
+    let currentTime = 0;
+    const interval = 100; // 每100ms更新一次
+    const totalSteps = (estimatedTime * 1000) / interval;
+    
+    const timer = setInterval(() => {
+        currentTime += interval;
+        const progress = Math.min((currentTime / (estimatedTime * 1000)) * 100, 100);
+        const remainingSeconds = Math.max(0, estimatedTime - Math.floor(currentTime / 1000));
+        
+        if (progressBar) {
+            progressBar.style.width = `${progress}%`;
+        }
+        
+        if (remainingTimeSpan) {
+            remainingTimeSpan.textContent = remainingSeconds;
+        }
+        
+        // 当进度达到100%时，自动检查状态
+        if (progress >= 100) {
+            clearInterval(timer);
+            setTimeout(() => {
+                checkSupplementStatus(query, modalId);
+            }, 500);
+        }
+    }, interval);
+    
+    // 存储定时器ID，以便需要时可以清除
+    window.supplementTimer = timer;
+}
+
+async function checkSupplementStatus(query, modalId) {
+    try {
+        const checkBtn = document.getElementById('checkStatusBtn');
+        if (checkBtn) {
+            checkBtn.disabled = true;
+            checkBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>检查中...';
+        }
+        
+        const response = await fetch(`/api/data-supplement-status?query=${encodeURIComponent(query)}`);
+        const result = await response.json();
+        
+        if (result.success && result.data.has_new_results) {
+            // 有新结果，重新执行智能搜索
+            const modal = document.getElementById(modalId);
+            showAlert(`数据补充完成！为"${query}"找到了 ${result.data.results_count} 个相关企业`, 'success');
+            
+            // 清除补充进度定时器
+            if (window.supplementTimer) {
+                clearInterval(window.supplementTimer);
+            }
+            
+            // 重新搜索
+            await performIntelligentSearch(query, modal, 1);
+        } else {
+            // 还没有新结果
+            if (checkBtn) {
+                checkBtn.disabled = false;
+                checkBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>检查进度';
+            }
+            
+            showAlert(result.data.message || '数据补充仍在进行中，请稍后再试', 'info');
+        }
+        
+    } catch (error) {
+        console.error('检查补充状态失败:', error);
+        const checkBtn = document.getElementById('checkStatusBtn');
+        if (checkBtn) {
+            checkBtn.disabled = false;
+            checkBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>检查进度';
+        }
+        showAlert('检查状态失败，请重试', 'error');
+    }
+}
+
+function getScoreClass(score) {
+    // 处理百分比分数(0-100)和小数分数(0-1)
+    const normalizedScore = score > 1 ? score / 100 : score;
+    
+    if (normalizedScore >= 0.8) return 'score-excellent';
+    if (normalizedScore >= 0.6) return 'score-good';
+    if (normalizedScore >= 0.4) return 'score-fair';
+    return 'score-poor';
+}
+
+async function selectIntelligentResult(companyName, hasExternalData, modalId) {
+    try {
+        // 填充企业名称到输入框
+        const customerNameInput = document.getElementById('customerName');
+        customerNameInput.value = companyName;
+        
+        // 关闭模态框
+        const modal = document.getElementById(modalId);
+        const modalInstance = bootstrap.Modal.getInstance(modal);
+        modalInstance.hide();
+        
+        // 更新当前企业名称显示
+        updateCurrentCompanyName();
+        
+        // 如果有外部数据，自动拉取资信信息
+        if (hasExternalData) {
+            showAlert(`已选择企业：${companyName}，正在自动拉取资信数据...`, 'info');
+            await autoFillCompanyInfo();
+        } else {
+            showAlert(`已选择企业：${companyName}`, 'success');
+        }
+        
+        // 添加到企业数据库
+        await addCompanyToDatabase(companyName);
+        
+    } catch (error) {
+        console.error('选择企业失败:', error);
+        showAlert('选择企业失败，请重试', 'error');
+    }
+}
+
+async function loadMoreIntelligentResults(modalId) {
+    try {
+        const modal = document.getElementById(modalId);
+        const resultsContainer = modal.querySelector('#intelligentSearchResults');
+        
+        // 显示加载状态
+        const loadMoreBtn = resultsContainer.querySelector('button[onclick*="loadMoreIntelligentResults"]');
+        if (loadMoreBtn) {
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>正在搜索...';
+        }
+        
+        // 搜索下一页
+        currentSearchPage += 1;
+        await performIntelligentSearch(currentSearchQuery, modal, currentSearchPage);
+        
+    } catch (error) {
+        console.error('加载更多搜索结果失败:', error);
+        showAlert('加载更多搜索结果失败，请重试', 'error');
+    }
+}
+
+function useManualInput(query) {
+    // 填充查询内容到输入框
+    const customerNameInput = document.getElementById('customerName');
+    customerNameInput.value = query;
+    
+    // 关闭模态框
+    const modal = document.getElementById('intelligentSearchModal');
+    const modalInstance = bootstrap.Modal.getInstance(modal);
+    modalInstance.hide();
+    
+    // 更新当前企业名称显示
+    updateCurrentCompanyName();
+    
+    // 添加到企业数据库
+    addCompanyToDatabase(query);
+    
+    showAlert(`已手动输入企业名称：${query}`, 'success');
+}
+
+function showAlert(message, type = 'info') {
+    // 创建提示框
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        if (alertDiv && alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 3000);
+}
+
+async function triggerAdditionalSupplement(modalId) {
+    // 手动触发额外的数据补充
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    const queryElement = modal.querySelector('.search-info .fw-bold');
+    if (!queryElement) return;
+    
+    const query = queryElement.textContent.replace(/["""]/g, '').trim();
+    const resultsContainer = modal.querySelector('#intelligentSearchResults');
+    
+    try {
+        // 显示补充进度
+        resultsContainer.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2">正在继续补充 "${query}" 的相关企业...</div>
+                <p class="text-muted mt-2">正在扩展搜索范围，寻找更多相关企业</p>
+            </div>
+        `;
+        
+        // 调用智能搜索API（强制触发补充）
+        const response = await fetch('/api/intelligent-search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                query: query + ' 扩展', // 添加"扩展"关键词强制触发
+                page: 1
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.data.supplement_triggered) {
+            showDataSupplementProgress(resultsContainer, result.data, modal);
+        } else {
+            showAlert('数据补充服务暂时不可用，请稍后重试', 'warning');
+            // 重新搜索原始查询
+            await performIntelligentSearch(query, modal, 1);
+        }
+        
+    } catch (error) {
+        console.error('触发额外补充失败:', error);
+        showAlert('补充失败，请重试', 'error');
+    }
+}
+
+function showRefineSearchInput(modalId) {
+    // 显示精确搜索输入框
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    const queryElement = modal.querySelector('.search-info .fw-bold');
+    if (!queryElement) return;
+    
+    const originalQuery = queryElement.textContent.replace(/["""]/g, '').trim();
+    const resultsContainer = modal.querySelector('#intelligentSearchResults');
+    
+    resultsContainer.innerHTML = `
+        <div class="refine-search-container">
+            <div class="alert alert-info">
+                <i class="bi bi-lightbulb me-2"></i>
+                <strong>精确搜索提示：</strong>您可以添加更多关键词来精确搜索企业
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">基于原始查询进行精确搜索：</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light">"${originalQuery}"</span>
+                    <input type="text" class="form-control" id="refineSearchInput" 
+                           placeholder="添加更多关键词，如：光电、技术、设备等">
+                    <button class="btn btn-primary" onclick="performRefineSearch('${modalId}', '${originalQuery}')">
+                        <i class="bi bi-search me-1"></i>精确搜索
+                    </button>
+                </div>
+                <div class="form-text">
+                    例如：在"维斯登"基础上添加"光电设备"，搜索"维斯登光电设备"
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button type="button" class="btn btn-outline-secondary" onclick="performIntelligentSearch('${originalQuery}', document.getElementById('${modalId}'), 1)">
+                    <i class="bi bi-arrow-left me-1"></i>返回原始搜索结果
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // 聚焦到输入框
+    setTimeout(() => {
+        const input = document.getElementById('refineSearchInput');
+        if (input) {
+            input.focus();
+            // 回车键搜索
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performRefineSearch(modalId, originalQuery);
+                }
+            });
+        }
+    }, 100);
+}
+
+async function performRefineSearch(modalId, originalQuery) {
+    // 执行精确搜索
+    const input = document.getElementById('refineSearchInput');
+    if (!input) return;
+    
+    const additionalKeywords = input.value.trim();
+    if (!additionalKeywords) {
+        showAlert('请输入要添加的关键词', 'warning');
+        return;
+    }
+    
+    const refinedQuery = originalQuery + additionalKeywords;
+    const modal = document.getElementById(modalId);
+    
+    // 更新模态框中显示的查询
+    const queryElement = modal.querySelector('.search-info .fw-bold');
+    if (queryElement) {
+        queryElement.textContent = `"${refinedQuery}"`;
+    }
+    
+    // 执行新的智能搜索
+    await performIntelligentSearch(refinedQuery, modal, 1);
 }
 
  

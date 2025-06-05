@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 客户准入系统部署脚本
+# 客户售前等级评分系统部署脚本
 # 使用方法: ./deploy.sh [docker|k8s] [build|deploy|stop|clean]
 
 set -e
@@ -20,7 +20,7 @@ IMAGE_TAG="latest"
 
 # 帮助信息
 show_help() {
-    echo "客户准入系统部署脚本"
+    echo "客户售前等级评分系统部署脚本"
     echo ""
     echo "使用方法:"
     echo "  $0 [platform] [action]"
@@ -219,7 +219,7 @@ main() {
             ;;
     esac
     
-    log_info "客户准入系统部署脚本"
+    log_info "客户售前等级评分系统部署脚本"
     log_info "平台: $PLATFORM, 操作: $ACTION"
     
     check_dependencies

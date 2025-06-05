@@ -1,4 +1,4 @@
--- 客户准入系统数据库初始化脚本
+-- 客户售前等级评分系统数据库初始化脚本
 -- 设置字符集
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
