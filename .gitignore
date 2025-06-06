@@ -83,3 +83,5 @@ node_modules/
 # Temporary files
 *.tmp
 *.temp 
+# Cursor Chat Memory 缓存
+.cursor-memory/

@@ -3,214 +3,255 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>客户售前等级评分系统 - 管理员审批面板</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>管理员审批面板 - 客户售前等级评分系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
-    <style>
-        .admin-header {
-            background: linear-gradient(135deg, #dc3545, #fd7e14);
-            color: white;
-            padding: 20px 0;
-            margin-bottom: 30px;
-        }
-        
-        .stats-card {
-            background: linear-gradient(135deg, #007bff, #6f42c1);
-            color: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        }
-        
-        .stats-card h3 {
-            font-size: 2rem;
-            margin-bottom: 5px;
-        }
-        
-        .deleted-record {
-            background: #fff5f5;
-            border-left: 4px solid #dc3545;
-            margin-bottom: 15px;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .action-buttons {
-            margin-top: 10px;
-        }
-        
-        .btn-approve {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            border: none;
-            color: white;
-        }
-        
-        .btn-reject {
-            background: linear-gradient(135deg, #ffc107, #fd7e14);
-            border: none;
-            color: white;
-        }
-        
-        .warning-banner {
-            background: linear-gradient(135deg, #dc3545, #6f42c1);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .record-meta {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 10px;
-        }
-        
-        .customer-name {
-            font-weight: bold;
-            color: #007bff;
-        }
-        
-        .delete-reason {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            font-style: italic;
-            margin: 10px 0;
-        }
-    </style>
 </head>
 <body>
-    <div class="admin-header">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h1><i class="fas fa-user-shield"></i> 管理员审批面板</h1>
-                    <p class="mb-0">客户售前等级评分系统 - 删除记录审批管理</p>
-                </div>
-                <div class="col-md-4 text-end">
-                    <a href="/" class="btn btn-light">
-                        <i class="fas fa-home"></i> 返回主页
-                    </a>
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shield-check me-2"></i>客户售前等级评分系统
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="bi bi-plus-circle me-1"></i>新建评级
+                </a>
+                <a class="nav-link" href="/history">
+                    <i class="bi bi-clock-history me-1"></i>历史记录
+                </a>
+                <a class="nav-link active" href="/internal-admin-panel-x9k2m8p5">
+                    <i class="bi bi-shield-lock me-1"></i>管理面板
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面头部 -->
+    <div class="header-container">
+        <div class="container">
+            <div class="text-center">
+                <h1><i class="bi bi-shield-lock me-3"></i>管理员审批面板</h1>
+                <p class="lead mb-0">管理软删除记录和执行批量强制删除操作</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container main-container">
+        <!-- 警告提示横幅 -->
+        <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <div>
+                <strong>重要提示：</strong>此页面为内部管理界面，请谨慎操作。批准删除将永久移除数据，无法恢复！
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-trash3 me-2"></i>待审批删除记录
+                                </h5>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="refreshDeletedRecords()">
+                                        <i class="bi bi-arrow-clockwise me-1"></i>刷新
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="batchForceDelete()" id="batchDeleteBtn" disabled>
+                                        <i class="bi bi-trash-fill me-1"></i>批量强制删除 (<span id="selectedCount">0</span>)
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-sm" onclick="batchRestore()" id="batchRestoreBtn" disabled>
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>批量恢复 (<span id="selectedCountRestore">0</span>)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- 统计信息面板 -->
+                        <div id="statsSection" class="stats-panel mb-4">
+                            <div class="stats-header">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <h5 class="stats-title mb-0 me-3">
+                                            <i class="bi bi-graph-up me-2"></i>管理统计概览
+                                        </h5>
+                                        <span class="stats-subtitle text-muted">实时统计记录管理情况</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="stats-grid">
+                                <div class="stat-card total-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-database"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number" id="totalRecords">0</div>
+                                        <div class="stat-label">总记录数</div>
+                                        <div class="stat-description">系统中所有记录</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-card aplus-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number" id="activeRecords">0</div>
+                                        <div class="stat-label">有效记录</div>
+                                        <div class="stat-description">正常使用中</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-card bc-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-hourglass-split"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number" id="pendingDelete">0</div>
+                                        <div class="stat-label">待审批删除</div>
+                                        <div class="stat-description">等待处理</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 加载提示 -->
+                        <div id="loadingIndicator" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p class="mt-2 text-muted">正在加载待审批记录...</p>
+                        </div>
+
+                        <!-- 待审批删除记录表格 -->
+                        <div id="deletedRecordsTable" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-danger">
+                                        <tr>
+                                            <th>
+                                                <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll()">
+                                            </th>
+                                            <th>序号</th>
+                                            <th>客户名称</th>
+                                            <th>客户类型</th>
+                                            <th>提交人</th>
+                                            <th>综合得分</th>
+                                            <th>客户等级</th>
+                                            <th>删除时间</th>
+                                            <th>删除原因</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="deletedRecordsTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- 分页控件 -->
+                            <nav aria-label="分页导航" id="paginationNav" style="display: none;">
+                                <ul class="pagination justify-content-center" id="pagination">
+                                </ul>
+                            </nav>
+                        </div>
+
+                        <!-- 无数据提示 -->
+                        <div id="noDataMessage" class="text-center py-5" style="display: none;">
+                            <i class="bi bi-inbox display-1 text-muted"></i>
+                            <h4 class="text-muted mt-3">暂无待审批记录</h4>
+                            <p class="text-muted">所有删除记录都已处理完成</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="container">
-        <!-- 警告提示 -->
-        <div class="warning-banner">
-            <i class="fas fa-exclamation-triangle"></i>
-            <strong>注意：</strong>此页面为内部管理界面，请谨慎操作。审批通过的删除将永久移除数据，无法恢复！
-        </div>
-        
-        <!-- 统计信息 -->
-        <div class="row" id="statsContainer">
-            <div class="col-md-4">
-                <div class="stats-card">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h3 id="totalRecords">-</h3>
-                            <p class="mb-0">总记录数</p>
-                        </div>
-                        <i class="fas fa-database fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stats-card">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h3 id="activeRecords">-</h3>
-                            <p class="mb-0">有效记录</p>
-                        </div>
-                        <i class="fas fa-check-circle fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stats-card">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h3 id="pendingDelete">-</h3>
-                            <p class="mb-0">待审批删除</p>
-                        </div>
-                        <i class="fas fa-hourglass-half fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 待审批删除记录 -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-trash-alt"></i> 待审批删除记录
-                </h5>
-            </div>
-            <div class="card-body">
-                <div id="deletedRecordsContainer">
-                    <div class="text-center">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">加载中...</span>
-                        </div>
-                        <p class="mt-2">正在加载数据...</p>
-                    </div>
-                </div>
-                
-                <!-- 分页导航 -->
-                <nav aria-label="分页导航" id="paginationContainer" style="display: none;">
-                    <ul class="pagination justify-content-center" id="pagination">
-                    </ul>
-                </nav>
-            </div>
-        </div>
-    </div>
-
-    <!-- 审批确认模态框 -->
-    <div class="modal fade" id="confirmModal" tabindex="-1">
+    <!-- 批量强制删除确认模态框 -->
+    <div class="modal fade" id="batchDeleteModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="confirmModalTitle">确认操作</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="confirmModalBody">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="confirmButton">确认</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 拒绝原因模态框 -->
-    <div class="modal fade" id="rejectModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">拒绝删除</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle me-2"></i>批量强制删除确认
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="rejectReason" class="form-label">拒绝原因：</label>
-                        <textarea class="form-control" id="rejectReason" rows="3" placeholder="请输入拒绝删除的原因..."></textarea>
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>危险操作：</strong>您即将永久删除 <span id="deleteCount">0</span> 条记录，此操作不可恢复！
                     </div>
+                    <p>被删除的记录列表：</p>
+                    <ul id="deleteList" class="list-unstyled">
+                    </ul>
+                    <p class="text-muted">请确认您要执行此操作。</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-warning" id="submitReject">确认拒绝</button>
+                    <button type="button" class="btn btn-danger" id="confirmBatchDelete">
+                        <i class="bi bi-trash-fill me-1"></i>确认强制删除
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 批量恢复确认模态框 -->
+    <div class="modal fade" id="batchRestoreModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-arrow-counterclockwise me-2"></i>批量恢复确认
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>您即将恢复 <span id="restoreCount">0</span> 条记录：</p>
+                    <ul id="restoreList" class="list-unstyled">
+                    </ul>
+                    <div class="mb-3">
+                        <label for="restoreReason" class="form-label">恢复原因：</label>
+                        <textarea class="form-control" id="restoreReason" rows="3" placeholder="请输入恢复记录的原因..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-success" id="confirmBatchRestore">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>确认恢复
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 单个记录操作模态框 -->
+    <div class="modal fade" id="singleActionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" id="singleActionHeader">
+                    <h5 class="modal-title" id="singleActionTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="singleActionBody">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmSingleAction">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/admin_panel.js') }}"></script>
 </body>
 </html> 

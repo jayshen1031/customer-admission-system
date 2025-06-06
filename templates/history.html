@@ -21,6 +21,9 @@
                 <a class="nav-link active" href="/history">
                     <i class="bi bi-clock-history me-1"></i>历史记录
                 </a>
+                <a class="btn btn-outline-light btn-sm ms-2" href="/internal-admin-panel-x9k2m8p5">
+                    <i class="bi bi-shield-lock me-1"></i>管理
+                </a>
             </div>
         </div>
     </nav>
@@ -293,6 +296,36 @@
             </div>
             <div class="toast-body" id="toastMessage">
                 <!-- 消息内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 管理员登录模态框 -->
+    <div class="modal fade" id="adminLoginModal" tabindex="-1" aria-labelledby="adminLoginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adminLoginModalLabel">
+                        <i class="bi bi-shield-lock me-2"></i>管理员登录
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="adminLoginForm">
+                        <div class="mb-3">
+                            <label for="adminPassword" class="form-label">管理员密码</label>
+                            <input type="password" class="form-control" id="adminPassword" 
+                                   placeholder="请输入管理员密码" required>
+                        </div>
+                        <div id="adminLoginError" class="alert alert-danger d-none">
+                            密码错误，请重新输入
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="verifyAdminLogin()">登录</button>
+                </div>
             </div>
         </div>
     </div>

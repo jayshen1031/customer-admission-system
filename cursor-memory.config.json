@@ -1,0 +1,25 @@
+{
+  "project": {
+    "name": "客户准入系统",
+    "path": ".",
+    "description": "客户准入系统 项目的聊天记忆配置"
+  },
+  "memory": {
+    "enableProjectSpecific": true,
+    "maxProjectSessions": 20,
+    "projectKeywords": [
+      "客户准入系统",
+      "客户准入系统"
+    ]
+  },
+  "filters": {
+    "includeCategories": ["JavaScript", "Python", "Web开发", "系统工具"],
+    "excludeKeywords": ["test", "测试"],
+    "minImportance": 0.3
+  },
+  "output": {
+    "format": "markdown",
+    "includeTimestamps": true,
+    "maxSummaryLength": 150
+  }
+}

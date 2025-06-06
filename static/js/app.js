@@ -1738,4 +1738,58 @@ async function performRefineSearch(modalId, originalQuery) {
     await performIntelligentSearch(refinedQuery, modal, 1);
 }
 
+// ===============================
+// 管理员登录功能
+// ===============================
+function showAdminLogin() {
+    // 显示管理员登录模态框
+    const modal = new bootstrap.Modal(document.getElementById('adminLoginModal'));
+    
+    // 清空之前的输入和错误信息
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('adminLoginError').classList.add('d-none');
+    
+    modal.show();
+    
+    // 聚焦到密码输入框
+    setTimeout(() => {
+        document.getElementById('adminPassword').focus();
+    }, 300);
+}
+
+function verifyAdminLogin() {
+    const password = document.getElementById('adminPassword').value;
+    const errorDiv = document.getElementById('adminLoginError');
+    
+    // 验证密码（初始密码：yusan）
+    if (password === 'yusan') {
+        // 密码正确，跳转到管理界面
+        errorDiv.classList.add('d-none');
+        
+        // 关闭模态框
+        const modal = bootstrap.Modal.getInstance(document.getElementById('adminLoginModal'));
+        modal.hide();
+        
+        // 跳转到管理界面
+        window.location.href = '/internal-admin-panel-x9k2m8p5';
+    } else {
+        // 密码错误，显示错误信息
+        errorDiv.classList.remove('d-none');
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('adminPassword').focus();
+    }
+}
+
+// 添加回车键登录支持
+document.addEventListener('DOMContentLoaded', function() {
+    const adminPasswordInput = document.getElementById('adminPassword');
+    if (adminPasswordInput) {
+        adminPasswordInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verifyAdminLogin();
+            }
+        });
+    }
+});
+
  

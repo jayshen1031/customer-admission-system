@@ -141,6 +141,11 @@ def test_autocomplete():
     """自动补全测试页面"""
     return send_file('test_autocomplete.html')
 
+@app.route('/test-admin-login')
+def test_admin_login():
+    """管理员登录测试页面"""
+    return send_file('test_admin_login.html')
+
 @app.route('/api/calculate', methods=['POST'])
 def calculate_rating():
     """计算客户评级"""
@@ -174,49 +179,26 @@ def calculate_rating():
                       credit_score + profit_estimate_score)
         
         # 确定等级
-        if customer_type == 'peer':
-            # 同行客户售前项目等级最高不超过C级
-            if total_score > 90:
-                grade = 'C'
-                message = '⚠️ 同行客户限制：根据规则，同行客户售前项目等级最高不超过C级（原得分90+分）'
-                alert_class = 'warning'
-            elif total_score >= 80:
-                grade = 'C'
-                message = '⚠️ 同行客户限制：根据规则，同行客户售前项目等级最高不超过C级（原得分80-89分）'
-                alert_class = 'warning'
-            elif total_score >= 70:
-                grade = 'C'
-                message = '⚠️ 同行客户等级为C级（得分70-79分），需要谨慎评估'
-                alert_class = 'warning'
-            elif total_score >= 60:
-                grade = 'C'
-                message = '⚠️ 同行客户等级为C级（原得分60-69分），需要谨慎评估'
-                alert_class = 'warning'
-            else:
-                grade = 'D'
-                message = '❗ 该客户评级为D级，不建议合作'
-                alert_class = 'danger'
+        if total_score > 90:
+            grade = 'A+'
+            message = '✅ 该客户评级为A+级，推荐优先合作'
+            alert_class = 'success'
+        elif total_score <= 90 and total_score > 80:
+            grade = 'A'
+            message = '📈 该客户评级为A级，建议加强合作'
+            alert_class = 'success'
+        elif total_score <= 80 and total_score >= 70:
+            grade = 'B'
+            message = '⚠️ 该客户评级为B级，有一定的风险，需要谨慎评估'
+            alert_class = 'warning'
+        elif total_score < 70 and total_score >= 60:
+            grade = 'C'
+            message = '❗ 该客户评级为C级，需要领导审批'
+            alert_class = 'danger'
         else:
-            if total_score > 90:
-                grade = 'A+'
-                message = '✅ 该客户评级为A+级，推荐优先合作'
-                alert_class = 'success'
-            elif total_score <= 90 and total_score > 80:
-                grade = 'A'
-                message = '📈 该客户评级为A级，建议加强合作'
-                alert_class = 'success'
-            elif total_score <= 80 and total_score >= 70:
-                grade = 'B'
-                message = '⚠️ 该客户评级为B级，有一定的风险，需要谨慎评估'
-                alert_class = 'warning'
-            elif total_score < 70 and total_score >= 60:
-                grade = 'C'
-                message = '❗ 该客户评级为C级，需要领导审批'
-                alert_class = 'danger'
-            else:
-                grade = 'D'
-                message = '❗ 该客户评级为D级，不建议合作'
-                alert_class = 'danger'
+            grade = 'D'
+            message = '❗ 该客户评级为D级，不建议合作'
+            alert_class = 'danger'
         
         # 保存到数据库
         rating_details = {
@@ -936,12 +918,7 @@ def get_customer_type_text(customer_type):
     return types.get(customer_type, customer_type)
 
 def get_rating_conclusion(grade, customer_type, total_score):
-    if customer_type == 'peer':
-        if total_score >= 60:
-            return '⚠️ 同行客户限制：根据规则，同行客户售前项目等级最高不超过C级'
-        else:
-            return '❗ 同行客户评级为D级，不建议合作'
-    elif grade == 'A+':
+    if grade == 'A+':
         return '✅ 该客户评级为A+级，推荐优先合作'
     elif grade == 'A':
         return '📈 该客户评级为A级，建议加强合作'
