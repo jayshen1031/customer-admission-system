@@ -1622,19 +1622,19 @@ body {
 /* ===== 智能搜索样式 ===== */
 
 .intelligent-search-section {
-    padding: 0.75rem 0;
-    border-top: 1px solid var(--gray-200);
-    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: var(--border-radius-sm);
+    margin-top: 0.5rem;
 }
 
 .intelligent-search-section .btn {
-    border-radius: var(--border-radius-sm);
-    font-size: 0.875rem;
-    padding: 0.5rem 1rem;
     font-weight: 500;
     transition: var(--transition);
     position: relative;
     overflow: hidden;
+    border: 2px solid transparent;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
 }
 
 .intelligent-search-section .btn::before {
@@ -1650,6 +1650,66 @@ body {
 
 .intelligent-search-section .btn:hover::before {
     left: 100%;
+}
+
+/* 自动补全中的分隔线样式 */
+.autocomplete-divider {
+    margin: 0.5rem 0.75rem;
+}
+
+.autocomplete-divider hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gray-300), transparent);
+    margin: 0;
+}
+
+/* 自动补全智能搜索提示样式 */
+.intelligent-search-section .autocomplete-hint {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+}
+
+.intelligent-search-section .autocomplete-hint i {
+    color: var(--warning-color);
+    margin-right: 0.5rem;
+}
+
+/* 智能搜索按钮的特殊样式 */
+.intelligent-search-section .btn-outline-primary {
+    background: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 600;
+    position: relative;
+    overflow: hidden;
+}
+
+.intelligent-search-section .btn-outline-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--primary-gradient);
+    transition: var(--transition);
+    z-index: -1;
+}
+
+.intelligent-search-section .btn-outline-primary:hover {
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(103, 126, 234, 0.3);
+}
+
+.intelligent-search-section .btn-outline-primary:hover::before {
+    left: 0;
 }
 
 /* 智能搜索模态框 */

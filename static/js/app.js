@@ -359,6 +359,23 @@ function showSuggestions(suggestions, query, isPopular = false) {
         `;
     });
     
+    // 如果不是热门推荐，且有实际搜索查询，添加智能搜索选项
+    if (!isPopular && query && query.trim().length >= 2) {
+        html += `
+            <div class="autocomplete-divider">
+                <hr class="my-2">
+            </div>
+            <div class="intelligent-search-section">
+                <div class="autocomplete-hint">
+                    <i class="bi bi-lightbulb me-1"></i> 没有找到想要的企业？
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm w-100 mt-1" onclick="showIntelligentSearch('${query}')">
+                    <i class="bi bi-magic me-1"></i>智能搜索"${query}"相关企业
+                </button>
+            </div>
+        `;
+    }
+    
     autocompleteContainer.innerHTML = html;
     autocompleteContainer.style.display = 'block';
     autocompleteVisible = true;
