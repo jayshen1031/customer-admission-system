@@ -6,7 +6,7 @@
     <title>客户售前等级评分系统 - 客户评级</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/style.css') }}?v=2.0" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}?v=3.0" rel="stylesheet">
 </head>
 <body>
     <!-- 导航栏 -->
@@ -158,11 +158,10 @@
                                     <label for="submitterDepartment" class="form-label">
                                         <i class="bi bi-building-gear me-2"></i> 所属部门
                                         <span class="text-danger">*</span>
-                                        <small class="text-muted">(支持智能匹配历史)</small>
                                     </label>
                                     <div class="position-relative">
                                         <input type="text" class="form-control" id="submitterDepartment" 
-                                               placeholder="输入部门名称，支持智能提示..." 
+                                               placeholder="请输入所属部门..." 
                                                autocomplete="off" required>
                                         <div id="departmentAutocomplete" class="autocomplete-suggestions" style="display: none;">
                                             <!-- 部门自动补全建议将在这里显示 -->
@@ -779,6 +778,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/app.js') }}?v=2.0"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=3.0"></script>
 </body>
 </html> 
